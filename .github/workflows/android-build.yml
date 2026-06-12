@@ -14,7 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2. Node.js環境のセットアップ（タイポを修正）
+    # 2. Node.js環境のセットアップ
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -27,19 +27,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # 4. PWABuilder CLIをインストール
-    - name: Install PWABuilder CLI
-      run: npm install -g @pwabuilder/cli
-
-    # 5. PWAのURLからAndroidプロジェクト（APK）を自動生成
-    # ※あなたのGitHub PagesのURLを直接叩いてパッケージ化します
+    # 4. npx を使って PWABuilder を実行（パス問題を回避）
+    # ※出力先をカレントディレクトリ直下の 'apk-output' に指定
     - name: Build APK via PWABuilder
       run: |
-        pwa-cli android --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ --output ./build-output
+        npx @pwabuilder/cli android --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ --output ./apk-output
 
-    # 6. 生成されたAPK（および関連ファイル）をGitHub上に保存
+    # 5. 生成された成果物フォルダを丸ごと保存
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: pwa-android-apk
-        path: ./build-output/*
+        path: ./apk-output/
