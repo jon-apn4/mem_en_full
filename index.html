@@ -17,6 +17,7 @@
       --accent:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
       --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
       --list-fs:13px; --editor-fs:15px;
+      --row-min-h:36px;
     }
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
@@ -43,26 +44,39 @@
       color:var(--text); padding:6px 12px; font-size:13px; outline:none; -webkit-appearance:none; }
     #search::placeholder { color:var(--muted); }
 
+    /* ── SORT BAR ── */
+    #sort-bar { display:flex; align-items:center; gap:6px; padding:5px 10px;
+      border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
+    .sort-btn { background:none; border:1px solid var(--border); border-radius:6px;
+      color:var(--muted); font-size:11px; padding:3px 8px; cursor:pointer; white-space:nowrap;
+      -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    .sort-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(255,214,10,.08); }
+    #sort-bar-label { font-size:11px; color:var(--muted); flex-shrink:0; }
+
     /* ── LIST ── */
     #list-view { display:flex; flex-direction:column; flex:1; overflow:hidden; }
     #note-list { list-style:none; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
 
     .note-row {
-      display:flex; align-items:center; height:36px; padding:0 10px;
+      display:flex; align-items:center;
+      min-height:var(--row-min-h);
+      padding:0 10px;
       gap:6px; border-bottom:1px solid var(--border); cursor:pointer;
       -webkit-tap-highlight-color:transparent; user-select:none; transition:background .1s;
-      touch-action:pan-y; /* 通常時は縦スクロール許可 */
+      touch-action:pan-y;
     }
     .note-row:active { background:var(--hover); }
     .note-row.dragging { opacity:.35; background:var(--hover); }
     .note-row.drag-over-top    { border-top:2px solid var(--accent); }
     .note-row.drag-over-bottom { border-bottom:2px solid var(--accent); }
     .note-row.sort-mode { touch-action:none; background:rgba(255,214,10,.04); }
+    .note-row.pinned-row { background:rgba(255,214,10,.06); }
 
     .drag-handle { color:var(--muted); font-size:16px; flex-shrink:0;
       cursor:grab; padding:0 2px; display:none; }
     .note-row.sort-mode .drag-handle { display:block; }
 
+    .pin-icon { font-size:11px; flex-shrink:0; color:var(--accent); }
     .row-icon  { font-size:13px; flex-shrink:0; }
     .row-title { flex:1; font-size:var(--list-fs); font-weight:500;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -98,21 +112,23 @@
       display:flex; align-items:flex-end; justify-content:center; z-index:100; }
     .modal-bg.hidden { display:none; }
     .modal { background:var(--hd); border-radius:18px 18px 0 0; width:100%; max-width:480px;
-      padding:18px 18px calc(18px + var(--safe-bottom)); }
+      padding:18px 18px calc(18px + var(--safe-bottom)); max-height:80vh; overflow-y:auto; }
     .modal h2 { font-size:15px; font-weight:700; margin-bottom:16px; text-align:center; }
     .modal-row { display:flex; align-items:center; padding:10px 0;
-      border-bottom:1px solid var(--border); gap:10px; }
+      border-bottom:1px solid var(--border); gap:10px; flex-wrap:wrap; }
     .modal-row:last-child { border-bottom:none; }
     .modal-label { font-size:13px; white-space:nowrap; }
-    .modal-row input[type=range] { flex:1; accent-color:var(--accent); }
+    .modal-row input[type=range] { flex:1; accent-color:var(--accent); min-width:80px; }
     .modal-row .val { font-size:12px; color:var(--accent); min-width:34px; text-align:right; }
     .modal-close { width:100%; margin-top:14px; padding:11px; background:var(--hover);
       border:none; border-radius:10px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; }
     .modal-btn { flex:1; padding:10px 6px; border:none; border-radius:8px; font-size:12px;
-      font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+      font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; min-width:80px; }
     .modal-btn.export { background:var(--accent); color:#000; }
     .modal-btn.import { background:var(--hover); color:var(--text); }
-    #csv-import { display:none; }
+    .modal-section-title { font-size:11px; color:var(--muted); width:100%; padding-top:4px; }
+    .io-group { display:flex; gap:6px; flex-wrap:wrap; width:100%; }
+    .io-group .modal-btn { min-width:calc(50% - 3px); flex:1 1 calc(50% - 3px); }
 
     .sort-toggle { padding:5px 10px; border:1.5px solid var(--accent); border-radius:8px;
       background:none; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer;
@@ -139,6 +155,15 @@
     <div id="search-wrap">
       <input id="search" type="search" placeholder="🔍 検索…" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
+    <!-- ソートバー -->
+    <div id="sort-bar">
+      <span id="sort-bar-label">並順:</span>
+      <button class="sort-btn" id="sb-manual">手動</button>
+      <button class="sort-btn" id="sb-date-desc">日時↓</button>
+      <button class="sort-btn" id="sb-date-asc">日時↑</button>
+      <button class="sort-btn" id="sb-title-desc">題名↓</button>
+      <button class="sort-btn" id="sb-title-asc">題名↑</button>
+    </div>
     <div id="longpress-hint">≡ ドラッグして並べ替え　／　「完了」で終了</div>
     <ul id="note-list"></ul>
   </div>
@@ -148,6 +173,7 @@
     <header>
       <button class="hbtn" id="back-btn">← 一覧</button>
       <span id="detail-date"></span>
+      <button class="hbtn" id="pin-btn">📌</button>
       <button class="hbtn" id="save-btn">💾 保存</button>
       <button class="hbtn" id="del-note-btn">削除</button>
     </header>
@@ -172,9 +198,23 @@
         <span class="val" id="list-fs-val">13px</span>
       </div>
       <div class="modal-row">
-        <button class="modal-btn export" id="csv-export-btn">📤 CSV書き出し</button>
-        <button class="modal-btn import" id="csv-import-btn">📥 CSV取り込み</button>
-        <input type="file" id="csv-import" accept=".csv">
+        <span class="modal-section-title">📤 書き出し</span>
+        <div class="io-group">
+          <button class="modal-btn export" id="csv-export-btn">CSV</button>
+          <button class="modal-btn export" id="json-export-btn">JSON</button>
+          <button class="modal-btn export" id="html-export-btn">HTML</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-section-title">📥 取り込み</span>
+        <div class="io-group">
+          <button class="modal-btn import" id="csv-import-btn">CSV</button>
+          <button class="modal-btn import" id="json-import-btn">JSON</button>
+          <button class="modal-btn import" id="html-import-btn">HTML</button>
+        </div>
+        <input type="file" id="csv-import"  accept=".csv"  style="display:none">
+        <input type="file" id="json-import" accept=".json" style="display:none">
+        <input type="file" id="html-import" accept=".html,.htm" style="display:none">
       </div>
       <button class="modal-close" id="modal-close">閉じる</button>
     </div>
@@ -182,17 +222,22 @@
 
 </div>
 <script>
+"use strict";
 const STORAGE_KEY  = "memo-pwa-notes";
 const SETTINGS_KEY = "memo-pwa-settings";
 
+// ── State ─────────────────────────────────────────────────
 let notes     = [];
 let currentId = null;
-let sortMode  = false;
+let sortMode  = false;   // 手動並び替えモード
 let dragEl    = null;
+let autoSortKey = "manual"; // "manual"|"date-desc"|"date-asc"|"title-desc"|"title-asc"
 
 // ── Storage ───────────────────────────────────────────────
 function load() {
   try { notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { notes = []; }
+  // pinned フィールドが無い古いデータに対応
+  notes.forEach(n => { if (n.pinned === undefined) n.pinned = false; });
 }
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); } catch {}
@@ -202,47 +247,97 @@ function loadSettings() {
     const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
     applyListFs(s.listFs   || 13);
     applyEditorFs(s.editorFs || 15);
+    if (s.autoSortKey) setAutoSort(s.autoSortKey, false);
   } catch {}
 }
 function saveSettings() {
-  const lfs = +document.getElementById("list-fs-range").value;
-  const efs = +document.getElementById("editor-fs-range").value;
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({listFs:lfs, editorFs:efs})); } catch {}
+  const lfs = +listFsRange.value;
+  const efs = +editorFsRange.value;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({listFs:lfs, editorFs:efs, autoSortKey})); } catch {}
 }
+
 function applyListFs(v) {
-  document.documentElement.style.setProperty("--list-fs", v + "px");
-  document.getElementById("list-fs-range").value = v;
-  document.getElementById("list-fs-val").textContent = v + "px";
+  const vv = +v;
+  // 行の最小高さ = フォントサイズ * 2.6（上下余白を含む自然な高さ）
+  const minH = Math.round(vv * 2.6);
+  document.documentElement.style.setProperty("--list-fs", vv + "px");
+  document.documentElement.style.setProperty("--row-min-h", minH + "px");
+  listFsRange.value = vv;
+  listFsVal.textContent = vv + "px";
 }
 function applyEditorFs(v) {
   document.documentElement.style.setProperty("--editor-fs", v + "px");
-  document.getElementById("editor-fs-range").value = v;
-  document.getElementById("editor-fs-val").textContent = v + "px";
+  editorFsRange.value = v;
+  editorFsVal.textContent = v + "px";
 }
 
 // ── Helpers ───────────────────────────────────────────────
-function fmt(iso) {
-  return new Date(iso).toLocaleDateString("ja-JP",
-    {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"});
-}
+const dtFmt = new Intl.DateTimeFormat("ja-JP", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+function fmt(iso) { return dtFmt.format(new Date(iso)); }
 function makeNote() {
-  return {id:Date.now(), title:"無題のメモ", body:"", updatedAt:new Date().toISOString()};
+  return {id:Date.now(), title:"無題のメモ", body:"", updatedAt:new Date().toISOString(), pinned:false};
 }
 function esc(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // ── DOM refs ──────────────────────────────────────────────
-const listView   = document.getElementById("list-view");
-const detailView = document.getElementById("detail-view");
-const noteList   = document.getElementById("note-list");
-const searchEl   = document.getElementById("search");
-const titleEl    = document.getElementById("note-title");
-const bodyEl     = document.getElementById("note-body");
-const detailDate = document.getElementById("detail-date");
-const sortToggle = document.getElementById("sort-toggle");
-const modalBg    = document.getElementById("modal-bg");
-const hint       = document.getElementById("longpress-hint");
+const listView    = document.getElementById("list-view");
+const detailView  = document.getElementById("detail-view");
+const noteList    = document.getElementById("note-list");
+const searchEl    = document.getElementById("search");
+const titleEl     = document.getElementById("note-title");
+const bodyEl      = document.getElementById("note-body");
+const detailDate  = document.getElementById("detail-date");
+const sortToggle  = document.getElementById("sort-toggle");
+const modalBg     = document.getElementById("modal-bg");
+const hint        = document.getElementById("longpress-hint");
+const listFsRange = document.getElementById("list-fs-range");
+const listFsVal   = document.getElementById("list-fs-val");
+const editorFsRange = document.getElementById("editor-fs-range");
+const editorFsVal   = document.getElementById("editor-fs-val");
+const pinBtn      = document.getElementById("pin-btn");
+
+// ── Auto-sort ─────────────────────────────────────────────
+function setAutoSort(key, doRender = true) {
+  autoSortKey = key;
+  document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
+  const map = {"manual":"sb-manual","date-desc":"sb-date-desc","date-asc":"sb-date-asc",
+                "title-desc":"sb-title-desc","title-asc":"sb-title-asc"};
+  const el = document.getElementById(map[key]);
+  if (el) el.classList.add("active");
+  // 手動並び替えボタン：手動モード以外では無効化
+  sortToggle.style.opacity = (key === "manual") ? "" : ".35";
+  sortToggle.style.pointerEvents = (key === "manual") ? "" : "none";
+  if (doRender) renderList();
+}
+
+function getSortedList(list) {
+  const pinned    = list.filter(n => n.pinned);
+  const unpinned  = list.filter(n => !n.pinned);
+  function cmp(a, b) {
+    if (autoSortKey === "date-desc")  return new Date(b.updatedAt) - new Date(a.updatedAt);
+    if (autoSortKey === "date-asc")   return new Date(a.updatedAt) - new Date(b.updatedAt);
+    if (autoSortKey === "title-desc") return b.title.localeCompare(a.title, "ja");
+    if (autoSortKey === "title-asc")  return a.title.localeCompare(b.title, "ja");
+    return 0; // manual: 元の順を保持
+  }
+  const sortedPinned   = autoSortKey !== "manual" ? [...pinned].sort(cmp)   : pinned;
+  const sortedUnpinned = autoSortKey !== "manual" ? [...unpinned].sort(cmp) : unpinned;
+  return [...sortedPinned, ...sortedUnpinned];
+}
+
+document.querySelectorAll(".sort-btn").forEach(btn => {
+  const keyMap = {"sb-manual":"manual","sb-date-desc":"date-desc","sb-date-asc":"date-asc",
+                  "sb-title-desc":"title-desc","sb-title-asc":"title-asc"};
+  btn.addEventListener("click", () => { setAutoSort(keyMap[btn.id]); saveSettings(); });
+});
 
 // ── Views ─────────────────────────────────────────────────
 function showList() {
@@ -260,54 +355,107 @@ function showDetail(id) {
   titleEl.value = n.title;
   bodyEl.value  = n.body;
   detailDate.textContent = "最終更新: " + fmt(n.updatedAt);
+  updatePinBtn(n.pinned);
+}
+function updatePinBtn(pinned) {
+  pinBtn.textContent = pinned ? "📌固定中" : "📌";
+  pinBtn.style.color = pinned ? "var(--accent)" : "";
 }
 
-// ── Render list ───────────────────────────────────────────
+// ── Render list（仮想DOM差分なし・軽量DOM再構築）─────────
+let _lastListKey = "";
 function renderList() {
-  const q = searchEl.value.toLowerCase();
-  const list = sortMode
+  const q    = searchEl.value.toLowerCase();
+  const base = sortMode
     ? [...notes]
     : notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  const list = getSortedList(base);
 
-  noteList.innerHTML = "";
+  // 変化がなければスキップ
+  const key = list.map(n => n.id + ":" + n.updatedAt + ":" + n.pinned).join("|") +
+              "|sm:" + sortMode + "|q:" + q;
+  if (key === _lastListKey) return;
+  _lastListKey = key;
+
+  // DocumentFragment で一括挿入
+  const frag = document.createDocumentFragment();
   if (list.length === 0) {
     const li = document.createElement("li");
     li.id = "empty-msg";
+    li.style.cssText = "color:var(--muted);font-size:13px;text-align:center;padding:40px 16px";
     li.textContent = q ? "一致するメモがありません" : "メモがありません。＋ で作成してください。";
-    noteList.appendChild(li);
-    return;
+    frag.appendChild(li);
+  } else {
+    list.forEach(n => frag.appendChild(buildRow(n)));
   }
-  list.forEach(n => {
-    const li = document.createElement("li");
-    li.className = "note-row" + (sortMode ? " sort-mode" : "");
-    li.dataset.id = n.id;
-    li.innerHTML =
-      `<span class="drag-handle">≡</span>` +
-      `<span class="row-icon">📄</span>` +
-      `<span class="row-title">${esc(n.title)}</span>` +
-      `<span class="row-date">${fmt(n.updatedAt)}</span>` +
-      `<button class="row-del" data-id="${n.id}" aria-label="削除">×</button>`;
+  noteList.textContent = ""; // innerHTMLより高速
+  noteList.appendChild(frag);
+}
 
-    if (!sortMode) {
-      // 通常タップで開く
-      li.addEventListener("click", e => {
-        if (e.target.classList.contains("row-del")) return;
-        showDetail(n.id);
-      });
-      // 長押しで並び替えモードへ
-      setupLongPress(li);
-    } else {
-      // 並び替えモードのドラッグ
-      setupDrag(li);
-    }
-    noteList.appendChild(li);
-  });
+function buildRow(n) {
+  const li = document.createElement("li");
+  li.className = "note-row" + (sortMode ? " sort-mode" : "") + (n.pinned ? " pinned-row" : "");
+  li.dataset.id = n.id;
+
+  // ドラッグハンドル
+  const handle = document.createElement("span");
+  handle.className = "drag-handle";
+  handle.textContent = "≡";
+  li.appendChild(handle);
+
+  // ピンアイコン
+  if (n.pinned) {
+    const pi = document.createElement("span");
+    pi.className = "pin-icon";
+    pi.textContent = "📌";
+    li.appendChild(pi);
+  }
+
+  // 本文アイコン
+  const icon = document.createElement("span");
+  icon.className = "row-icon";
+  icon.textContent = "📄";
+  li.appendChild(icon);
+
+  // タイトル
+  const rowTitle = document.createElement("span");
+  rowTitle.className = "row-title";
+  rowTitle.textContent = n.title;
+  li.appendChild(rowTitle);
+
+  if (!sortMode) {
+    // 日時
+    const rowDate = document.createElement("span");
+    rowDate.className = "row-date";
+    rowDate.textContent = fmt(n.updatedAt);
+    li.appendChild(rowDate);
+
+    // 削除ボタン
+    const delBtn = document.createElement("button");
+    delBtn.className = "row-del";
+    delBtn.dataset.id = n.id;
+    delBtn.setAttribute("aria-label","削除");
+    delBtn.textContent = "×";
+    li.appendChild(delBtn);
+
+    li.addEventListener("click", rowClickHandler);
+    setupLongPress(li);
+  } else {
+    setupDrag(li);
+  }
+  return li;
+}
+
+function rowClickHandler(e) {
+  if (e.target.classList.contains("row-del")) return;
+  const id = Number(e.currentTarget.dataset.id);
+  showDetail(id);
 }
 
 // ── Long-press → sort mode ────────────────────────────────
 function setupLongPress(li) {
   let timer = null;
-  const start = () => { timer = setTimeout(() => { enterSortMode(); }, 500); };
+  const start  = () => { timer = setTimeout(enterSortMode, 500); };
   const cancel = () => { clearTimeout(timer); timer = null; };
   li.addEventListener("touchstart", start,  {passive:true});
   li.addEventListener("touchend",   cancel, {passive:true});
@@ -317,11 +465,13 @@ function setupLongPress(li) {
   li.addEventListener("mouseleave", cancel);
 }
 function enterSortMode() {
+  if (autoSortKey !== "manual") return; // 自動ソート中は手動並び替え不可
   sortMode = true;
   sortToggle.classList.add("active");
   sortToggle.textContent = "完了";
   searchEl.disabled = true;
   hint.classList.add("show");
+  _lastListKey = "";
   renderList();
 }
 
@@ -329,7 +479,6 @@ function enterSortMode() {
 function setupDrag(li) {
   const handle = li.querySelector(".drag-handle");
 
-  // ── Touch ──
   handle.addEventListener("touchstart", e => {
     e.preventDefault();
     dragEl = li;
@@ -340,47 +489,34 @@ function setupDrag(li) {
     e.preventDefault();
     if (!dragEl) return;
     const y = e.touches[0].clientY;
-    noteList.querySelectorAll(".note-row").forEach(item => {
-      item.classList.remove("drag-over-top","drag-over-bottom");
-    });
-    const target = [...noteList.querySelectorAll(".note-row")].find(item => {
-      if (item === dragEl) return false;
+    const rows = noteList.querySelectorAll(".note-row");
+    rows.forEach(item => item.classList.remove("drag-over-top","drag-over-bottom"));
+    for (const item of rows) {
+      if (item === dragEl) continue;
       const r = item.getBoundingClientRect();
-      return y >= r.top && y <= r.bottom;
-    });
-    if (target) {
-      const r = target.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      target.classList.add(y < mid ? "drag-over-top" : "drag-over-bottom");
+      if (y >= r.top && y <= r.bottom) {
+        item.classList.add(y < r.top + r.height / 2 ? "drag-over-top" : "drag-over-bottom");
+        break;
+      }
     }
   }, {passive:false});
 
-  handle.addEventListener("touchend", e => {
+  handle.addEventListener("touchend", () => {
     if (!dragEl) return;
     const rows = [...noteList.querySelectorAll(".note-row")];
     const overTop    = rows.find(i => i.classList.contains("drag-over-top"));
     const overBottom = rows.find(i => i.classList.contains("drag-over-bottom"));
     const target = overTop || overBottom;
     if (target && target !== dragEl) {
-      const fromId = Number(dragEl.dataset.id);
-      const toId   = Number(target.dataset.id);
-      const fi = notes.findIndex(n => n.id === fromId);
-      const ti = notes.findIndex(n => n.id === toId);
-      if (fi !== -1 && ti !== -1) {
-        const [moved] = notes.splice(fi, 1);
-        const newTi = notes.findIndex(n => n.id === toId);
-        const ins = overBottom ? newTi + 1 : newTi;
-        notes.splice(ins, 0, moved);
-        save();
-      }
+      moveNote(Number(dragEl.dataset.id), Number(target.dataset.id), !!overBottom);
     }
     dragEl.classList.remove("dragging");
     rows.forEach(i => i.classList.remove("drag-over-top","drag-over-bottom"));
     dragEl = null;
+    _lastListKey = "";
     renderList();
   }, {passive:false});
 
-  // ── Mouse ──
   li.setAttribute("draggable","true");
   li.addEventListener("dragstart", () => { dragEl = li; li.classList.add("dragging"); });
   li.addEventListener("dragover", e => {
@@ -394,21 +530,23 @@ function setupDrag(li) {
     e.preventDefault();
     li.classList.remove("drag-over-top","drag-over-bottom");
     if (!dragEl || dragEl === li) { dragEl=null; return; }
-    const fromId = Number(dragEl.dataset.id);
-    const toId   = Number(li.dataset.id);
-    const fi = notes.findIndex(n => n.id === fromId);
-    const ti = notes.findIndex(n => n.id === toId);
-    if (fi !== -1 && ti !== -1) {
-      const isBottom = li.classList.contains("drag-over-bottom") ||
-        e.clientY >= li.getBoundingClientRect().top + li.getBoundingClientRect().height/2;
-      const [moved] = notes.splice(fi,1);
-      const newTi = notes.findIndex(n => n.id === toId);
-      notes.splice(isBottom ? newTi+1 : newTi, 0, moved);
-      save(); renderList();
-    }
+    const isBottom = e.clientY >= li.getBoundingClientRect().top + li.getBoundingClientRect().height/2;
+    moveNote(Number(dragEl.dataset.id), Number(li.dataset.id), isBottom);
     dragEl = null;
+    _lastListKey = "";
+    renderList();
   });
   li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl=null; });
+}
+
+function moveNote(fromId, toId, insertAfter) {
+  const fi = notes.findIndex(n => n.id === fromId);
+  const ti = notes.findIndex(n => n.id === toId);
+  if (fi === -1 || ti === -1) return;
+  const [moved] = notes.splice(fi,1);
+  const newTi = notes.findIndex(n => n.id === toId);
+  notes.splice(insertAfter ? newTi+1 : newTi, 0, moved);
+  save();
 }
 
 // ── Sort toggle button ────────────────────────────────────
@@ -418,6 +556,7 @@ sortToggle.addEventListener("click", () => {
   sortToggle.textContent = sortMode ? "完了" : "並替";
   searchEl.disabled = sortMode;
   hint.classList.toggle("show", sortMode);
+  _lastListKey = "";
   renderList();
 });
 
@@ -426,22 +565,37 @@ document.getElementById("settings-btn").addEventListener("click", () => modalBg.
 document.getElementById("modal-close").addEventListener("click", () => { modalBg.classList.add("hidden"); saveSettings(); });
 modalBg.addEventListener("click", e => { if(e.target===modalBg){ modalBg.classList.add("hidden"); saveSettings(); } });
 
-document.getElementById("list-fs-range").addEventListener("input", function() { applyListFs(+this.value); });
+listFsRange.addEventListener("input", function() { applyListFs(+this.value); });
 
-// ── Editor font size (inline bar) ─────────────────────────
-document.getElementById("editor-fs-range").addEventListener("input", function() {
+// ── Editor font size ──────────────────────────────────────
+editorFsRange.addEventListener("input", function() {
   applyEditorFs(+this.value);
   saveSettings();
 });
 
-// ── Save button ───────────────────────────────────────────
+// ── Save / Back / Delete ──────────────────────────────────
 document.getElementById("save-btn").addEventListener("click", () => {
   if (!currentId) return;
   manualSave();
-  // 一時的に「保存済み」表示
   const btn = document.getElementById("save-btn");
   btn.textContent = "✅ 保存済";
   setTimeout(() => { btn.textContent = "💾 保存"; }, 1200);
+});
+document.getElementById("back-btn").addEventListener("click", () => { manualSave(); showList(); });
+document.getElementById("del-note-btn").addEventListener("click", () => {
+  if (!currentId) return;
+  if (!confirm("このメモを削除しますか？")) return;
+  notes = notes.filter(n => n.id !== currentId); save(); showList();
+});
+
+// ── Pin toggle ────────────────────────────────────────────
+pinBtn.addEventListener("click", () => {
+  if (!currentId) return;
+  const idx = notes.findIndex(n => n.id === currentId);
+  if (idx === -1) return;
+  notes[idx].pinned = !notes[idx].pinned;
+  updatePinBtn(notes[idx].pinned);
+  save();
 });
 
 function manualSave() {
@@ -455,50 +609,173 @@ function manualSave() {
   save();
 }
 
-// ── CSV export ────────────────────────────────────────────
+// ── Auto-save（debounce）─────────────────────────────────
+let _autoSaveTimer = null;
+function scheduleAutoSave() {
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => {
+    if (!currentId) return;
+    const idx = notes.findIndex(n => n.id === currentId);
+    if (idx === -1) return;
+    notes[idx].title     = titleEl.value || "無題のメモ";
+    notes[idx].body      = bodyEl.value;
+    notes[idx].updatedAt = new Date().toISOString();
+    detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
+    save();
+  }, 600);
+}
+titleEl.addEventListener("input", scheduleAutoSave);
+bodyEl.addEventListener("input",  scheduleAutoSave);
+
+// ── List click delegation ─────────────────────────────────
+noteList.addEventListener("click", e => {
+  const btn = e.target.closest(".row-del");
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (!confirm("このメモを削除しますか？")) return;
+  notes = notes.filter(n => n.id !== id);
+  save();
+  _lastListKey = "";
+  renderList();
+});
+searchEl.addEventListener("input", renderList);
+
+// ── New note ──────────────────────────────────────────────
+document.getElementById("add-btn").addEventListener("click", () => {
+  if (sortMode) return;
+  const n = makeNote(); notes.unshift(n); save(); showDetail(n.id);
+});
+
+// ─────────────────────────────────────────────────────────
+// ── EXPORT ───────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+
+// CSV
 document.getElementById("csv-export-btn").addEventListener("click", () => {
-  const rows = [["id","title","body","updatedAt"]];
+  const rows = [["id","title","body","updatedAt","pinned"]];
   notes.forEach(n => rows.push([
     n.id,
     '"' + (n.title||"").replace(/"/g,'""') + '"',
     '"' + (n.body ||"").replace(/"/g,'""') + '"',
-    n.updatedAt
+    n.updatedAt,
+    n.pinned ? "1" : "0"
   ]));
-  const csv  = rows.map(r => r.join(",")).join("\r\n");
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url; a.download = "memo_"+new Date().toISOString().slice(0,10)+".csv"; a.click();
-  URL.revokeObjectURL(url);
+  const csv = rows.map(r => r.join(",")).join("\r\n");
+  download(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}),
+           "memo_" + today() + ".csv");
 });
 
-// ── CSV import ────────────────────────────────────────────
+// JSON
+document.getElementById("json-export-btn").addEventListener("click", () => {
+  const data = JSON.stringify(notes, null, 2);
+  download(new Blob([data], {type:"application/json;charset=utf-8"}),
+           "memo_" + today() + ".json");
+});
+
+// HTML
+document.getElementById("html-export-btn").addEventListener("click", () => {
+  const items = notes.map(n =>
+    `<article>\n  <h2>${esc(n.title)}</h2>\n  <time>${esc(n.updatedAt)}</time>\n  <pre>${esc(n.body)}</pre>\n</article>`
+  ).join("\n");
+  const html = `<!DOCTYPE html>\n<html lang="ja">\n<head><meta charset="UTF-8"><title>メモ一覧</title>` +
+    `<style>body{font-family:sans-serif;max-width:700px;margin:2em auto;padding:0 1em}` +
+    `article{border:1px solid #ccc;border-radius:8px;margin-bottom:1.5em;padding:1em}` +
+    `h2{margin:0 0 .3em}time{font-size:.8em;color:#888}pre{white-space:pre-wrap;margin-top:.6em}</style>\n</head>\n<body>\n` +
+    `<h1>メモ一覧</h1>\n${items}\n</body>\n</html>`;
+  download(new Blob([html], {type:"text/html;charset=utf-8"}),
+           "memo_" + today() + ".html");
+});
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ─────────────────────────────────────────────────────────
+// ── IMPORT ───────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+
+function mergeImported(imported) {
+  imported.forEach(n => {
+    if (!n.id) n.id = Date.now() + Math.random();
+    if (!n.updatedAt) n.updatedAt = new Date().toISOString();
+    if (n.pinned === undefined) n.pinned = false;
+    const ex = notes.findIndex(x => x.id === n.id);
+    if (ex !== -1) notes[ex] = n;
+    else notes.unshift(n);
+  });
+  save();
+  _lastListKey = "";
+  renderList();
+}
+
+// CSV import
 document.getElementById("csv-import-btn").addEventListener("click", () => document.getElementById("csv-import").click());
 document.getElementById("csv-import").addEventListener("change", function() {
-  const file = this.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
+  const file = this.files[0]; if (!file) return;
+  readFile(file, "UTF-8", text => {
     try {
-      const text  = e.target.result.replace(/^\uFEFF/,"");
-      const lines = text.split(/\r?\n/).filter(l=>l.trim());
+      const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim());
       const imported = [];
-      for (let i=1;i<lines.length;i++) {
+      for (let i=1; i<lines.length; i++) {
         const cols = parseCSVLine(lines[i]);
         if (cols.length < 3) continue;
-        const id  = Number(cols[0]) || Date.now()+i;
-        const title = cols[1]||"無題のメモ", body=cols[2]||"";
-        const updatedAt = cols[3]||new Date().toISOString();
-        const ex = notes.findIndex(n=>n.id===id);
-        if (ex!==-1) notes[ex]={id,title,body,updatedAt};
-        else imported.push({id,title,body,updatedAt});
+        imported.push({
+          id: Number(cols[0]) || Date.now()+i,
+          title: cols[1]||"無題のメモ",
+          body:  cols[2]||"",
+          updatedAt: cols[3]||new Date().toISOString(),
+          pinned: cols[4]==="1"
+        });
       }
-      notes=[...imported,...notes]; save(); renderList();
-      alert(imported.length+"件取り込みました。");
+      mergeImported(imported);
+      alert(imported.length + "件を取り込みました。");
     } catch(err) { alert("CSVの読み込みに失敗しました: "+err.message); }
-  };
-  reader.readAsText(file,"UTF-8");
-  this.value="";
+  });
+  this.value = "";
 });
+
+// JSON import
+document.getElementById("json-import-btn").addEventListener("click", () => document.getElementById("json-import").click());
+document.getElementById("json-import").addEventListener("change", function() {
+  const file = this.files[0]; if (!file) return;
+  readFile(file, "UTF-8", text => {
+    try {
+      let data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error("配列形式のJSONではありません");
+      mergeImported(data);
+      alert(data.length + "件を取り込みました。");
+    } catch(err) { alert("JSONの読み込みに失敗しました: "+err.message); }
+  });
+  this.value = "";
+});
+
+// HTML import（このアプリが書き出したHTMLのみ対応）
+document.getElementById("html-import-btn").addEventListener("click", () => document.getElementById("html-import").click());
+document.getElementById("html-import").addEventListener("change", function() {
+  const file = this.files[0]; if (!file) return;
+  readFile(file, "UTF-8", text => {
+    try {
+      const dp = new DOMParser();
+      const doc = dp.parseFromString(text, "text/html");
+      const arts = doc.querySelectorAll("article");
+      if (!arts.length) throw new Error("<article> 要素が見つかりません");
+      const imported = [];
+      arts.forEach(art => {
+        const title     = art.querySelector("h2")?.textContent || "無題のメモ";
+        const body      = art.querySelector("pre")?.textContent || "";
+        const updatedAt = art.querySelector("time")?.textContent || new Date().toISOString();
+        imported.push({id: Date.now()+Math.random(), title, body, updatedAt, pinned:false});
+      });
+      mergeImported(imported);
+      alert(imported.length + "件を取り込みました。");
+    } catch(err) { alert("HTMLの読み込みに失敗しました: "+err.message); }
+  });
+  this.value = "";
+});
+
+function readFile(file, enc, cb) {
+  const reader = new FileReader();
+  reader.onload = e => cb(e.target.result);
+  reader.readAsText(file, enc);
+}
 
 function parseCSVLine(line) {
   const result=[]; let cur="",inQ=false;
@@ -509,38 +786,6 @@ function parseCSVLine(line) {
   }
   result.push(cur); return result;
 }
-
-// ── Note CRUD ─────────────────────────────────────────────
-document.getElementById("add-btn").addEventListener("click", () => {
-  if (sortMode) return;
-  const n = makeNote(); notes.unshift(n); save(); showDetail(n.id);
-});
-document.getElementById("back-btn").addEventListener("click", () => { manualSave(); showList(); });
-document.getElementById("del-note-btn").addEventListener("click", () => {
-  if (!currentId) return;
-  if (!confirm("このメモを削除しますか？")) return;
-  notes = notes.filter(n => n.id !== currentId); save(); showList();
-});
-noteList.addEventListener("click", e => {
-  const btn = e.target.closest(".row-del"); if(!btn) return;
-  const id = Number(btn.dataset.id);
-  if (!confirm("このメモを削除しますか？")) return;
-  notes = notes.filter(n => n.id !== id); save(); renderList();
-});
-searchEl.addEventListener("input", renderList);
-
-// 自動保存（入力のたびに）
-function autoSave() {
-  if (!currentId) return;
-  const idx = notes.findIndex(n => n.id === currentId); if(idx===-1) return;
-  notes[idx].title     = titleEl.value || "無題のメモ";
-  notes[idx].body      = bodyEl.value;
-  notes[idx].updatedAt = new Date().toISOString();
-  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
-  save();
-}
-titleEl.addEventListener("input", autoSave);
-bodyEl.addEventListener("input",  autoSave);
 
 // ── Init ──────────────────────────────────────────────────
 load();
