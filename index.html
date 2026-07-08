@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!-- saved from url=(0031)https://jon-apn4.github.io/mem/ -->
-<html lang="ja" style="--list-fs: 13px; --row-min-h: 34px; --editor-fs: 15px;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
+<html lang="ja">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,8 +17,7 @@
       --bg:#1C1C1E; --hd:#2C2C2E; --hover:#3A3A3C; --border:#3A3A3C;
       --accent:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
       --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
-      --list-fs:13px; --editor-fs:15px;
-      --row-min-h:36px;
+      --list-fs:13px; --editor-fs:15px; --row-min-h:36px;
     }
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
@@ -145,7 +145,7 @@
 <div id="app">
 
   <!-- LIST VIEW -->
-  <div id="list-view" style="display: flex;">
+  <div id="list-view">
     <header>
       <span id="header-title">📝 メモ帳</span>
       <button class="sort-toggle" id="sort-toggle">並替</button><button class="hbtn" id="search-toggle">検索</button>
@@ -163,7 +163,7 @@
       <button class="sort-btn" id="sb-title-toggle">題名↓</button>
     </div>
     <div id="longpress-hint">≡ ドラッグして並べ替え　／　「完了」で終了</div>
-    <ul id="note-list"><li class="note-row" data-id="1781328635472"><span class="drag-handle">≡</span><span class="row-icon">📄</span><span class="row-title">無題のメモ</span><span class="row-date">6月13日 14:37</span><button class="row-del" data-id="1781328635472" aria-label="削除">×</button></li></ul>
+    <ul id="note-list"></ul>
   </div>
 
   <!-- DETAIL VIEW -->
@@ -294,6 +294,7 @@ const titleEl     = document.getElementById("note-title");
 const bodyEl      = document.getElementById("note-body");
 const detailDate  = document.getElementById("detail-date");
 const sortToggle  = document.getElementById("sort-toggle");
+const sortBar     = document.getElementById("sort-bar");
 const modalBg     = document.getElementById("modal-bg");
 const hint        = document.getElementById("longpress-hint");
 const listFsRange = document.getElementById("list-fs-range");
@@ -306,13 +307,7 @@ const pinBtn      = document.getElementById("pin-btn");
 function setAutoSort(key, doRender = true) {
   autoSortKey = key;
   document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
-  const map = {"manual":"sb-manual","date-desc":"sb-date-desc","date-asc":"sb-date-asc",
-                "title-desc":"sb-title-desc","title-asc":"sb-title-asc"};
-  const el = document.getElementById(map[key]);
-  if (el) el.classList.add("active");
-// 完了ボタンは常に押せる
-sortToggle.style.opacity = "";
-sortToggle.style.pointerEvents = "";
+  if (key === "manual") document.getElementById("sb-manual").classList.add("active");
   if (doRender) renderList();
 }
 
@@ -331,11 +326,7 @@ function getSortedList(list) {
   return [...sortedPinned, ...sortedUnpinned];
 }
 
-document.querySelectorAll(".sort-btn").forEach(btn => {
-  const keyMap = {"sb-manual":"manual","sb-date-desc":"date-desc","sb-date-asc":"date-asc",
-                  "sb-title-desc":"title-desc","sb-title-asc":"title-asc"};
-  btn.addEventListener("click", () => { setAutoSort(keyMap[btn.id]); saveSettings(); });
-});
+document.getElementById("sb-manual").addEventListener("click", () => { setAutoSort("manual"); saveSettings(); });
 
 // ── Views ─────────────────────────────────────────────────
 function showList() {
@@ -546,15 +537,22 @@ function moveNote(fromId, toId, insertAfter) {
   save();
 }
 
-// ── Sort toggle button ────────────────────────────────────
+// ── Sort toggle button（並替モード切替 ＋ ソートバー表示切替）─
 sortToggle.addEventListener("click", () => {
   sortMode = !sortMode;
   sortToggle.classList.toggle("active", sortMode);
   sortToggle.textContent = sortMode ? "完了" : "並替";
   searchEl.disabled = sortMode;
   hint.classList.toggle("show", sortMode);
+  sortBar.style.display = sortMode ? "flex" : "none";
   _lastListKey = "";
   renderList();
+});
+
+// ── Search toggle button ──────────────────────────────────
+document.getElementById("search-toggle").addEventListener("click", () => {
+  const b = document.getElementById("search-wrap");
+  b.style.display = b.style.display === "none" ? "block" : "none";
 });
 
 // ── Settings modal ────────────────────────────────────────
@@ -570,15 +568,26 @@ editorFsRange.addEventListener("input", function() {
   saveSettings();
 });
 
-// ── Save / Back / Delete ──────────────────────────────────
+// ── 編集内容の保存（保存ボタン／自動保存 共通処理）────────
+function persistEdit() {
+  if (!currentId) return;
+  const idx = notes.findIndex(n => n.id === currentId);
+  if (idx === -1) return;
+  notes[idx].title     = titleEl.value.trim();
+  notes[idx].body      = bodyEl.value;
+  notes[idx].updatedAt = new Date().toISOString();
+  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
+  save();
+}
+
 document.getElementById("save-btn").addEventListener("click", () => {
   if (!currentId) return;
-  manualSave();
+  persistEdit();
   const btn = document.getElementById("save-btn");
   btn.textContent = "✅ 保存済";
   setTimeout(() => { btn.textContent = "💾 保存"; }, 1200);
 });
-document.getElementById("back-btn").addEventListener("click", () => { manualSave(); showList(); });
+document.getElementById("back-btn").addEventListener("click", () => { persistEdit(); showList(); });
 document.getElementById("del-note-btn").addEventListener("click", () => {
   if (!currentId) return;
   if (!confirm("このメモを削除しますか？")) return;
@@ -595,31 +604,11 @@ pinBtn.addEventListener("click", () => {
   save();
 });
 
-function manualSave() {
-  if (!currentId) return;
-  const idx = notes.findIndex(n => n.id === currentId);
-  if (idx === -1) return;
-  notes[idx].title = titleEl.value.trim();
-  notes[idx].body      = bodyEl.value;
-  notes[idx].updatedAt = new Date().toISOString();
-  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
-  save();
-}
-
 // ── Auto-save（debounce）─────────────────────────────────
 let _autoSaveTimer = null;
 function scheduleAutoSave() {
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => {
-    if (!currentId) return;
-    const idx = notes.findIndex(n => n.id === currentId);
-    if (idx === -1) return;
-    notes[idx].title = titleEl.value.trim();
-    notes[idx].body      = bodyEl.value;
-    notes[idx].updatedAt = new Date().toISOString();
-    detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
-    save();
-  }, 600);
+  _autoSaveTimer = setTimeout(persistEdit, 600);
 }
 titleEl.addEventListener("input", scheduleAutoSave);
 bodyEl.addEventListener("input",  scheduleAutoSave);
@@ -784,16 +773,7 @@ function parseCSVLine(line) {
   result.push(cur); return result;
 }
 
-
-document.getElementById("sort-toggle").addEventListener("click",()=>{
- const b=document.getElementById("sort-bar");
- b.style.display=b.style.display==="none"?"flex":"none";
-});
-document.getElementById("search-toggle").addEventListener("click",()=>{
- const b=document.getElementById("search-wrap");
- b.style.display=b.style.display==="none"?"block":"none";
-});
-
+// ── 日時／題名 ソートトグル ───────────────────────────────
 let dateAsc=false,titleAsc=false;
 document.getElementById("sb-date-toggle").addEventListener("click",()=>{
  dateAsc=!dateAsc;
