@@ -1,14 +1,15 @@
 <!DOCTYPE html>
+<!-- saved from url=(0031)https://jon-apn4.github.io/mem/ -->
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="メモ帳">
   <meta name="theme-color" content="#1C1C1E">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.svg">
+  <link rel="manifest" href="https://jon-apn4.github.io/mem/manifest.json">
+  <link rel="apple-touch-icon" href="https://jon-apn4.github.io/mem/icon-192.svg">
   <title>メモ帳</title>
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -16,8 +17,7 @@
       --bg:#1C1C1E; --hd:#2C2C2E; --hover:#3A3A3C; --border:#3A3A3C;
       --accent:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
       --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
-      --list-fs:13px; --editor-fs:15px;
-      --row-min-h:36px;
+      --list-fs:13px; --editor-fs:15px; --row-min-h:36px;
     }
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
@@ -148,21 +148,19 @@
   <div id="list-view">
     <header>
       <span id="header-title">📝 メモ帳</span>
-      <button class="sort-toggle" id="sort-toggle">並替</button>
+      <button class="sort-toggle" id="sort-toggle">並替</button><button class="hbtn" id="search-toggle">検索</button>
       <button class="hbtn" id="settings-btn">⚙️</button>
       <button class="hbtn" id="add-btn">＋ 新規</button>
     </header>
-    <div id="search-wrap">
+    <div id="search-wrap" style="display:none">
       <input id="search" type="search" placeholder="🔍 検索…" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
     <!-- ソートバー -->
-    <div id="sort-bar">
+    <div id="sort-bar" style="display:none">
       <span id="sort-bar-label">並順:</span>
       <button class="sort-btn" id="sb-manual">手動</button>
-      <button class="sort-btn" id="sb-date-desc">日時↓</button>
-      <button class="sort-btn" id="sb-date-asc">日時↑</button>
-      <button class="sort-btn" id="sb-title-desc">題名↓</button>
-      <button class="sort-btn" id="sb-title-asc">題名↑</button>
+      <button class="sort-btn" id="sb-date-toggle">日時↓</button>
+      <button class="sort-btn" id="sb-title-toggle">題名↓</button>
     </div>
     <div id="longpress-hint">≡ ドラッグして並べ替え　／　「完了」で終了</div>
     <ul id="note-list"></ul>
@@ -178,7 +176,7 @@
       <button class="hbtn" id="del-note-btn">削除</button>
     </header>
     <div id="editor">
-      <input id="note-title" type="text" placeholder="タイトル">
+      <input id="note-title" type="text" placeholder="ここに題名を書いてください">
       <textarea id="note-body" placeholder="ここに書き始めてください…"></textarea>
       <div id="fs-bar">
         <label for="editor-fs-range">文字</label>
@@ -212,7 +210,7 @@
           <button class="modal-btn import" id="json-import-btn">JSON</button>
           <button class="modal-btn import" id="html-import-btn">HTML</button>
         </div>
-        <input type="file" id="csv-import"  accept=".csv"  style="display:none">
+        <input type="file" id="csv-import" accept=".csv" style="display:none">
         <input type="file" id="json-import" accept=".json" style="display:none">
         <input type="file" id="html-import" accept=".html,.htm" style="display:none">
       </div>
@@ -258,8 +256,8 @@ function saveSettings() {
 
 function applyListFs(v) {
   const vv = +v;
-  // 行の最小高さ = フォントサイズ * 2.6（上下余白を含む自然な高さ）
-  const minH = Math.round(vv * 2.6);
+  // 行の最小高さ = フォントサイズ * 2.0（上下余白を含む自然な高さ）
+  const minH = Math.round(vv * 2.0);
   document.documentElement.style.setProperty("--list-fs", vv + "px");
   document.documentElement.style.setProperty("--row-min-h", minH + "px");
   listFsRange.value = vv;
@@ -275,7 +273,7 @@ function applyEditorFs(v) {
 const dtFmt = new Intl.DateTimeFormat("ja-JP", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
 function fmt(iso) { return dtFmt.format(new Date(iso)); }
 function makeNote() {
-  return {id:Date.now(), title:"無題のメモ", body:"", updatedAt:new Date().toISOString(), pinned:false};
+  return {id:Date.now(), title:"", body:"", updatedAt:new Date().toISOString(), pinned:false};
 }
 function esc(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -296,6 +294,7 @@ const titleEl     = document.getElementById("note-title");
 const bodyEl      = document.getElementById("note-body");
 const detailDate  = document.getElementById("detail-date");
 const sortToggle  = document.getElementById("sort-toggle");
+const sortBar     = document.getElementById("sort-bar");
 const modalBg     = document.getElementById("modal-bg");
 const hint        = document.getElementById("longpress-hint");
 const listFsRange = document.getElementById("list-fs-range");
@@ -308,13 +307,7 @@ const pinBtn      = document.getElementById("pin-btn");
 function setAutoSort(key, doRender = true) {
   autoSortKey = key;
   document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
-  const map = {"manual":"sb-manual","date-desc":"sb-date-desc","date-asc":"sb-date-asc",
-                "title-desc":"sb-title-desc","title-asc":"sb-title-asc"};
-  const el = document.getElementById(map[key]);
-  if (el) el.classList.add("active");
-  // 手動並び替えボタン：手動モード以外では無効化
-  sortToggle.style.opacity = (key === "manual") ? "" : ".35";
-  sortToggle.style.pointerEvents = (key === "manual") ? "" : "none";
+  if (key === "manual") document.getElementById("sb-manual").classList.add("active");
   if (doRender) renderList();
 }
 
@@ -333,11 +326,7 @@ function getSortedList(list) {
   return [...sortedPinned, ...sortedUnpinned];
 }
 
-document.querySelectorAll(".sort-btn").forEach(btn => {
-  const keyMap = {"sb-manual":"manual","sb-date-desc":"date-desc","sb-date-asc":"date-asc",
-                  "sb-title-desc":"title-desc","sb-title-asc":"title-asc"};
-  btn.addEventListener("click", () => { setAutoSort(keyMap[btn.id]); saveSettings(); });
-});
+document.getElementById("sb-manual").addEventListener("click", () => { setAutoSort("manual"); saveSettings(); });
 
 // ── Views ─────────────────────────────────────────────────
 function showList() {
@@ -420,7 +409,7 @@ function buildRow(n) {
   // タイトル
   const rowTitle = document.createElement("span");
   rowTitle.className = "row-title";
-  rowTitle.textContent = n.title;
+  rowTitle.textContent = (n.title && n.title.trim()) ? n.title : ((n.body||"").trim().substring(0,40) || "(空白メモ)");
   li.appendChild(rowTitle);
 
   if (!sortMode) {
@@ -465,7 +454,6 @@ function setupLongPress(li) {
   li.addEventListener("mouseleave", cancel);
 }
 function enterSortMode() {
-  if (autoSortKey !== "manual") return; // 自動ソート中は手動並び替え不可
   sortMode = true;
   sortToggle.classList.add("active");
   sortToggle.textContent = "完了";
@@ -549,15 +537,22 @@ function moveNote(fromId, toId, insertAfter) {
   save();
 }
 
-// ── Sort toggle button ────────────────────────────────────
+// ── Sort toggle button（並替モード切替 ＋ ソートバー表示切替）─
 sortToggle.addEventListener("click", () => {
   sortMode = !sortMode;
   sortToggle.classList.toggle("active", sortMode);
   sortToggle.textContent = sortMode ? "完了" : "並替";
   searchEl.disabled = sortMode;
   hint.classList.toggle("show", sortMode);
+  sortBar.style.display = sortMode ? "flex" : "none";
   _lastListKey = "";
   renderList();
+});
+
+// ── Search toggle button ──────────────────────────────────
+document.getElementById("search-toggle").addEventListener("click", () => {
+  const b = document.getElementById("search-wrap");
+  b.style.display = b.style.display === "none" ? "block" : "none";
 });
 
 // ── Settings modal ────────────────────────────────────────
@@ -573,15 +568,26 @@ editorFsRange.addEventListener("input", function() {
   saveSettings();
 });
 
-// ── Save / Back / Delete ──────────────────────────────────
+// ── 編集内容の保存（保存ボタン／自動保存 共通処理）────────
+function persistEdit() {
+  if (!currentId) return;
+  const idx = notes.findIndex(n => n.id === currentId);
+  if (idx === -1) return;
+  notes[idx].title     = titleEl.value.trim();
+  notes[idx].body      = bodyEl.value;
+  notes[idx].updatedAt = new Date().toISOString();
+  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
+  save();
+}
+
 document.getElementById("save-btn").addEventListener("click", () => {
   if (!currentId) return;
-  manualSave();
+  persistEdit();
   const btn = document.getElementById("save-btn");
   btn.textContent = "✅ 保存済";
   setTimeout(() => { btn.textContent = "💾 保存"; }, 1200);
 });
-document.getElementById("back-btn").addEventListener("click", () => { manualSave(); showList(); });
+document.getElementById("back-btn").addEventListener("click", () => { persistEdit(); showList(); });
 document.getElementById("del-note-btn").addEventListener("click", () => {
   if (!currentId) return;
   if (!confirm("このメモを削除しますか？")) return;
@@ -598,31 +604,11 @@ pinBtn.addEventListener("click", () => {
   save();
 });
 
-function manualSave() {
-  if (!currentId) return;
-  const idx = notes.findIndex(n => n.id === currentId);
-  if (idx === -1) return;
-  notes[idx].title     = titleEl.value || "無題のメモ";
-  notes[idx].body      = bodyEl.value;
-  notes[idx].updatedAt = new Date().toISOString();
-  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
-  save();
-}
-
 // ── Auto-save（debounce）─────────────────────────────────
 let _autoSaveTimer = null;
 function scheduleAutoSave() {
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => {
-    if (!currentId) return;
-    const idx = notes.findIndex(n => n.id === currentId);
-    if (idx === -1) return;
-    notes[idx].title     = titleEl.value || "無題のメモ";
-    notes[idx].body      = bodyEl.value;
-    notes[idx].updatedAt = new Date().toISOString();
-    detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
-    save();
-  }, 600);
+  _autoSaveTimer = setTimeout(persistEdit, 600);
 }
 titleEl.addEventListener("input", scheduleAutoSave);
 bodyEl.addEventListener("input",  scheduleAutoSave);
@@ -787,6 +773,19 @@ function parseCSVLine(line) {
   result.push(cur); return result;
 }
 
+// ── 日時／題名 ソートトグル ───────────────────────────────
+let dateAsc=false,titleAsc=false;
+document.getElementById("sb-date-toggle").addEventListener("click",()=>{
+ dateAsc=!dateAsc;
+ setAutoSort(dateAsc?"date-asc":"date-desc");
+ document.getElementById("sb-date-toggle").textContent=dateAsc?"日時↑":"日時↓";
+});
+document.getElementById("sb-title-toggle").addEventListener("click",()=>{
+ titleAsc=!titleAsc;
+ setAutoSort(titleAsc?"title-asc":"title-desc");
+ document.getElementById("sb-title-toggle").textContent=titleAsc?"題名↑":"題名↓";
+});
+
 // ── Init ──────────────────────────────────────────────────
 load();
 loadSettings();
@@ -794,5 +793,6 @@ showList();
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
-</body>
-</html>
+
+
+</body></html>
