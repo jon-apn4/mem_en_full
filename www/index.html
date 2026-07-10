@@ -28,10 +28,11 @@
     header { display:flex; align-items:center; gap:8px;
       padding:calc(10px + var(--safe-top)) 12px 10px;
       background:var(--hd); border-bottom:1px solid var(--border); flex-shrink:0; }
-    #header-title { flex:1; font-size:15px; font-weight:700; }
+    #header-title { flex:1; min-width:0; font-size:15px; font-weight:700; text-align:left;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .hbtn { background:none; border:none; color:var(--accent); font-size:13px; font-weight:700;
       cursor:pointer; padding:5px 8px; border-radius:7px; -webkit-tap-highlight-color:transparent;
-      white-space:nowrap; }
+      white-space:nowrap; flex-shrink:0; }
     #add-btn { background:var(--accent); color:#000; border-radius:8px; }
     #back-btn { font-size:14px; padding:4px 0; }
     #detail-date { flex:1; font-size:10px; color:var(--muted); text-align:center; }
@@ -46,9 +47,9 @@
     #category-filter-label { flex:1; display:flex; align-items:center; gap:6px; min-width:0;
       overflow:hidden; }
     #category-filter-prefix { font-size:12px; color:var(--muted); white-space:nowrap; flex-shrink:0; }
-    #category-filter-name { font-size:11px; color:var(--accent); background:rgba(255,214,10,.1);
+    #category-filter-name { font-size:10px; color:var(--accent); background:rgba(255,214,10,.1);
       border:1px solid rgba(255,214,10,.3); border-radius:6px; padding:2px 8px; font-weight:700;
-      flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      flex:0 1 auto; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     #category-filter-clear { background:none; border:none; color:var(--muted); font-size:12px;
       cursor:pointer; padding:2px 4px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
     #search { width:100%; background:var(--hover); border:none; border-radius:7px;
@@ -94,8 +95,7 @@
     .row-date  { font-size:10px; color:var(--muted); flex-shrink:0; }
     .row-del   { background:none; border:none; color:var(--muted); font-size:18px;
       cursor:pointer; padding:0 3px; line-height:1; flex-shrink:0;
-      -webkit-tap-highlight-color:transparent; }
-    .note-row.sort-mode .row-del  { display:none; }
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
     .note-row.sort-mode .row-date { display:none; }
     #empty-msg { color:var(--muted); font-size:13px; text-align:center; padding:40px 16px; }
 
@@ -164,6 +164,16 @@
       outline:none; color:var(--accent); font-size:12px; font-family:inherit;
       padding-bottom:6px; width:100%; }
     #note-category::placeholder { color:var(--muted); }
+    #category-field-wrap { position:relative; }
+    #category-suggest { position:absolute; top:100%; left:5ch; right:10px; margin-top:2px;
+      background:rgba(255,214,10,.1); border:1px solid rgba(255,214,10,.3); border-radius:5px; z-index:50;
+      max-height:160px; overflow-y:auto; font-size:12px; line-height:1.1;
+      display:none; box-shadow:0 4px 12px rgba(0,0,0,.35); backdrop-filter:blur(6px); }
+    #category-suggest.show { display:block; }
+    .cat-suggest-item { display:block; width:100%; text-align:left; padding:4px 8px;
+      background:none; border:none; color:var(--accent); font-size:12px; line-height:1.1;
+      cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .cat-suggest-item:active, .cat-suggest-item:hover { background:rgba(255,214,10,.2); }
     .cat-option { display:block; width:100%; text-align:left; padding:9px 10px; margin-bottom:6px;
       border:1px solid var(--border); border-radius:8px; background:none; color:var(--text);
       font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
@@ -224,8 +234,10 @@
     </header>
     <div id="editor">
       <input id="note-title" type="text" placeholder="ここに題名を書いてください">
-      <input id="note-category" type="text" list="category-datalist" placeholder="カテゴリ（未入力の場合は「カテゴリなし」）">
-      <datalist id="category-datalist"></datalist>
+      <div id="category-field-wrap">
+        <input id="note-category" type="text" placeholder="カテゴリ（未入力の場合は「カテゴリなし」）" autocomplete="off">
+        <div id="category-suggest"></div>
+      </div>
       <textarea id="note-body" placeholder="ここに書き始めてください…"></textarea>
       <div id="fs-bar">
         <label for="editor-fs-range">文字</label>
@@ -391,15 +403,6 @@ function getAllCategories() {
   notes.forEach(n => { const c = (n.category||"").trim(); if (c) s.add(c); });
   return [...s].sort((a,b) => a.localeCompare(b,"ja"));
 }
-function updateCategoryDatalist() {
-  const dl = document.getElementById("category-datalist");
-  dl.textContent = "";
-  getAllCategories().forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c;
-    dl.appendChild(opt);
-  });
-}
 function esc(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
@@ -522,6 +525,9 @@ const pinBtn      = document.getElementById("pin-btn");
 const categoryEl  = document.getElementById("note-category");
 const categoryBtn = document.getElementById("category-btn");
 const categoryModalBg = document.getElementById("category-modal-bg");
+const categoryFieldWrap  = document.getElementById("category-field-wrap");
+const categorySuggest    = document.getElementById("category-suggest");
+const categoryOptionList = document.getElementById("category-option-list");
 
 // ── Auto-sort ─────────────────────────────────────────────
 function setAutoSort(key, doRender = true) {
@@ -563,8 +569,8 @@ function showDetail(id) {
   detailView.classList.add("active");
   titleEl.value = n.title;
   bodyEl.value  = n.body;
-  updateCategoryDatalist();
   categoryEl.value = n.category || "";
+  closeCategorySuggest();
   detailDate.textContent = "最終更新: " + fmt(n.updatedAt);
   updatePinBtn(n.pinned);
 }
@@ -654,17 +660,34 @@ function buildRow(n) {
       li.appendChild(rowDate);
     }
 
-    // 削除ボタン
+    li.addEventListener("click", rowClickHandler);
+    setupLongPress(li);
+  } else {
+    // 削除ボタン（並べ替えモード時のみ右側に表示）
     const delBtn = document.createElement("button");
+    delBtn.type = "button";
     delBtn.className = "row-del";
     delBtn.dataset.id = n.id;
     delBtn.setAttribute("aria-label","削除");
     delBtn.textContent = "×";
+    let delHandled = false;
+    const doDelete = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (delHandled) return; // touchend と click の二重発火を防止
+      delHandled = true;
+      setTimeout(() => { delHandled = false; }, 500);
+      const id = Number(delBtn.dataset.id);
+      if (!confirm("このメモを削除しますか？")) return;
+      notes = notes.filter(x => x.id !== id);
+      save();
+      _lastListKey = "";
+      renderList();
+    };
+    delBtn.addEventListener("touchend", doDelete, {passive:false});
+    delBtn.addEventListener("click", doDelete);
     li.appendChild(delBtn);
 
-    li.addEventListener("click", rowClickHandler);
-    setupLongPress(li);
-  } else {
     setupDrag(li);
   }
   return li;
@@ -740,8 +763,8 @@ function setupDrag(li) {
     renderList();
   }, {passive:false});
 
-  li.setAttribute("draggable","true");
-  li.addEventListener("dragstart", () => { dragEl = li; li.classList.add("dragging"); });
+  handle.setAttribute("draggable","true");
+  handle.addEventListener("dragstart", () => { dragEl = li; li.classList.add("dragging"); });
   li.addEventListener("dragover", e => {
     e.preventDefault();
     noteList.querySelectorAll(".note-row").forEach(i => i.classList.remove("drag-over-top","drag-over-bottom"));
@@ -804,24 +827,30 @@ function updateCategoryBtnLabel() {
   }
 }
 function buildCategoryModal() {
-  const wrap = document.getElementById("category-option-list");
-  wrap.textContent = "";
+  categoryOptionList.textContent = "";
   const options = [{label:"すべて", value:null}, {label:"カテゴリなし", value:""}];
   getAllCategories().forEach(c => options.push({label:c, value:c}));
+  const frag = document.createDocumentFragment();
   options.forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "cat-option" + (categoryFilter === opt.value ? " active" : "");
     btn.textContent = opt.label;
-    btn.addEventListener("click", () => {
-      categoryFilter = opt.value;
-      updateCategoryBtnLabel();
-      categoryModalBg.classList.add("hidden");
-      _lastListKey = "";
-      renderList();
-    });
-    wrap.appendChild(btn);
+    if (opt.value === null) btn.dataset.all = "1";
+    else btn.dataset.value = opt.value;
+    frag.appendChild(btn);
   });
+  categoryOptionList.appendChild(frag);
 }
+// 1つの委譲リスナーで全ボタンを処理（開くたびにリスナーを量産しない）
+categoryOptionList.addEventListener("click", e => {
+  const btn = e.target.closest(".cat-option");
+  if (!btn) return;
+  categoryFilter = btn.dataset.all ? null : (btn.dataset.value || "");
+  updateCategoryBtnLabel();
+  categoryModalBg.classList.add("hidden");
+  _lastListKey = "";
+  renderList();
+});
 categoryBtn.addEventListener("click", () => {
   buildCategoryModal();
   categoryModalBg.classList.remove("hidden");
@@ -834,6 +863,54 @@ document.getElementById("category-filter-clear").addEventListener("click", () =>
   _lastListKey = "";
   renderList();
 });
+
+// ── カテゴリ入力補助（候補ポップアップ）───────────────────
+// note-category はネイティブ datalist だとフォントサイズ・背景色・
+// インデントを指定できないため、独自のポップアップで代替する。
+let categorySuggestOpen = false;
+function buildCategorySuggestList() {
+  const cats = getAllCategories();
+  categorySuggest.textContent = "";
+  if (!cats.length) return false;
+  const frag = document.createDocumentFragment();
+  cats.forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cat-suggest-item";
+    b.textContent = c;
+    frag.appendChild(b);
+  });
+  categorySuggest.appendChild(frag);
+  return true;
+}
+function openCategorySuggest() {
+  if (!buildCategorySuggestList()) return;
+  categorySuggest.classList.add("show");
+  categorySuggestOpen = true;
+}
+function closeCategorySuggest() {
+  categorySuggest.classList.remove("show");
+  categorySuggestOpen = false;
+}
+// カテゴリ欄をタップ：閉じていれば候補を開き、開いていれば閉じて直接入力できるようにする
+categoryEl.addEventListener("click", () => {
+  if (categorySuggestOpen) closeCategorySuggest();
+  else openCategorySuggest();
+});
+// 候補から選択
+categorySuggest.addEventListener("click", e => {
+  const btn = e.target.closest(".cat-suggest-item");
+  if (!btn) return;
+  categoryEl.value = btn.textContent;
+  closeCategorySuggest();
+  scheduleAutoSave();
+});
+// 候補ポップアップの外側をタップしたら閉じる
+document.addEventListener("click", e => {
+  if (!categorySuggestOpen) return;
+  if (categoryFieldWrap.contains(e.target)) return;
+  closeCategorySuggest();
+}, {passive:true});
 
 // ── Settings modal ────────────────────────────────────────
 document.getElementById("settings-btn").addEventListener("click", () => modalBg.classList.remove("hidden"));
@@ -907,16 +984,6 @@ bodyEl.addEventListener("input",  scheduleAutoSave);
 categoryEl.addEventListener("input", scheduleAutoSave);
 
 // ── List click delegation ─────────────────────────────────
-noteList.addEventListener("click", e => {
-  const btn = e.target.closest(".row-del");
-  if (!btn) return;
-  const id = Number(btn.dataset.id);
-  if (!confirm("このメモを削除しますか？")) return;
-  notes = notes.filter(n => n.id !== id);
-  save();
-  _lastListKey = "";
-  renderList();
-});
 searchEl.addEventListener("input", renderList);
 
 // ── New note ──────────────────────────────────────────────
@@ -1004,7 +1071,7 @@ document.getElementById("csv-import").addEventListener("change", function() {
         if (cols.length < 3) continue;
         imported.push({
           id: Number(cols[iId]) || Date.now()+i,
-          title: (iTitle!==-1 && cols[iTitle]) || "無題のメモ",
+          title: (iTitle!==-1 && cols[iTitle]) || "",
           body:  (iBody!==-1 && cols[iBody]) || "",
           category: (iCategory!==-1 && cols[iCategory]) || "",
           updatedAt: (iUpdated!==-1 && cols[iUpdated]) || new Date().toISOString(),
@@ -1045,7 +1112,7 @@ document.getElementById("html-import").addEventListener("change", function() {
       if (!arts.length) throw new Error("<article> 要素が見つかりません");
       const imported = [];
       arts.forEach(art => {
-        const title     = art.querySelector("h2")?.textContent || "無題のメモ";
+        const title     = art.querySelector("h2")?.textContent || "";
         const body      = art.querySelector("pre")?.textContent || "";
         const updatedAt = art.querySelector("time")?.textContent || new Date().toISOString();
         let category    = art.querySelector(".category")?.textContent || "";
