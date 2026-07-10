@@ -135,6 +135,30 @@
       -webkit-tap-highlight-color:transparent; flex-shrink:0; }
     .sort-toggle.active { background:var(--accent); color:#000; }
 
+    /* ── カテゴリ ── */
+    #category-btn.active { color:var(--text); background:var(--hover); border-radius:7px; }
+    .row-category { font-size:10px; color:var(--accent); background:rgba(255,214,10,.1);
+      border:1px solid rgba(255,214,10,.3); border-radius:5px; padding:1px 5px; flex-shrink:0;
+      white-space:nowrap; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
+    .note-row.sort-mode .row-category { display:none; }
+    #note-category { background:transparent; border:none; border-bottom:1px solid var(--border);
+      outline:none; color:var(--accent); font-size:12px; font-family:inherit;
+      padding-bottom:6px; width:100%; }
+    #note-category::placeholder { color:var(--muted); }
+    .cat-option { display:block; width:100%; text-align:left; padding:9px 10px; margin-bottom:6px;
+      border:1px solid var(--border); border-radius:8px; background:none; color:var(--text);
+      font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .cat-option.active { border-color:var(--accent); color:var(--accent); background:rgba(255,214,10,.08); }
+
+    /* ── トースト通知 ── */
+    #toast { position:fixed; left:50%; bottom:calc(20px + var(--safe-bottom));
+      transform:translateX(-50%) translateY(20px);
+      background:var(--hd); color:var(--text); border:1px solid var(--border); border-radius:10px;
+      padding:10px 18px; font-size:13px; box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:200;
+      opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+      max-width:88vw; text-align:center; }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
     /* 長押しヒント */
     #longpress-hint { font-size:10px; color:var(--muted); text-align:center;
       padding:3px 0 2px; flex-shrink:0; display:none; }
@@ -148,7 +172,7 @@
   <div id="list-view">
     <header>
       <span id="header-title">📝 メモ帳</span>
-      <button class="sort-toggle" id="sort-toggle">並替</button><button class="hbtn" id="search-toggle">検索</button>
+      <button class="sort-toggle" id="sort-toggle">並替</button><button class="hbtn" id="search-toggle">検索</button><button class="hbtn" id="category-btn">📁 カテゴリ</button>
       <button class="hbtn" id="settings-btn">⚙️</button>
       <button class="hbtn" id="add-btn">＋ 新規</button>
     </header>
@@ -177,6 +201,8 @@
     </header>
     <div id="editor">
       <input id="note-title" type="text" placeholder="ここに題名を書いてください">
+      <input id="note-category" type="text" list="category-datalist" placeholder="カテゴリ（未入力の場合は「カテゴリなし」）">
+      <datalist id="category-datalist"></datalist>
       <textarea id="note-body" placeholder="ここに書き始めてください…"></textarea>
       <div id="fs-bar">
         <label for="editor-fs-range">文字</label>
@@ -218,7 +244,17 @@
     </div>
   </div>
 
+  <!-- CATEGORY MODAL -->
+  <div class="modal-bg hidden" id="category-modal-bg">
+    <div class="modal">
+      <h2>📁 カテゴリで絞り込み</h2>
+      <div id="category-option-list"></div>
+      <button class="modal-close" id="category-modal-close">閉じる</button>
+    </div>
+  </div>
+
 </div>
+<div id="toast"></div>
 <script>
 "use strict";
 const STORAGE_KEY  = "memo-pwa-notes";
@@ -230,12 +266,16 @@ let currentId = null;
 let sortMode  = false;   // 手動並び替えモード
 let dragEl    = null;
 let autoSortKey = "manual"; // "manual"|"date-desc"|"date-asc"|"title-desc"|"title-asc"
+let categoryFilter = null; // null=すべて／""=カテゴリなし／それ以外=カテゴリ名
 
 // ── Storage ───────────────────────────────────────────────
 function load() {
   try { notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { notes = []; }
-  // pinned フィールドが無い古いデータに対応
-  notes.forEach(n => { if (n.pinned === undefined) n.pinned = false; });
+  // pinned／category フィールドが無い古いデータに対応
+  notes.forEach(n => {
+    if (n.pinned === undefined) n.pinned = false;
+    if (n.category === undefined || n.category === null) n.category = "";
+  });
 }
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); } catch {}
@@ -273,16 +313,120 @@ function applyEditorFs(v) {
 const dtFmt = new Intl.DateTimeFormat("ja-JP", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
 function fmt(iso) { return dtFmt.format(new Date(iso)); }
 function makeNote() {
-  return {id:Date.now(), title:"", body:"", updatedAt:new Date().toISOString(), pinned:false};
+  return {id:Date.now(), title:"", body:"", category:"", updatedAt:new Date().toISOString(), pinned:false};
+}
+function categoryLabel(cat) {
+  return (cat && cat.trim()) ? cat.trim() : "カテゴリなし";
+}
+function getAllCategories() {
+  const s = new Set();
+  notes.forEach(n => { const c = (n.category||"").trim(); if (c) s.add(c); });
+  return [...s].sort((a,b) => a.localeCompare(b,"ja"));
+}
+function updateCategoryDatalist() {
+  const dl = document.getElementById("category-datalist");
+  dl.textContent = "";
+  getAllCategories().forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    dl.appendChild(opt);
+  });
 }
 function esc(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a   = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+// ── トースト通知 ──────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// ── Capacitorアプリ内（APK化後）での書き出し ───────────────
+// @capacitor/filesystem と @capacitor/share を android プロジェクトに追加すると、
+// ビルドやHTML側の追加変更なしに、この経路が自動的に使われるようになります。
+// （プラグイン未導入の場合は false を返し、下のWeb標準APIにフォールバックします）
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+async function exportViaCapacitor(blob, filename) {
+  try {
+    const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+    const { Filesystem, Share } = plugins;
+    if (!Filesystem) return false; // @capacitor/filesystem 未導入
+    const base64 = await blobToBase64(blob);
+    const result = await Filesystem.writeFile({ path: filename, data: base64, directory: "CACHE" });
+    if (Share && Share.share) {
+      await Share.share({ title: filename, url: result.uri, dialogTitle: filename + " を保存" });
+    }
+    showToast("✅ 「" + filename + "」の書き出しが完了しました");
+    return true;
+  } catch (err) {
+    console.error("Capacitor経由の書き出しに失敗:", err);
+    return false;
+  }
+}
+
+// ── 書き出し（保存先の選択に対応）─────────────────────────
+// 0) Capacitorアプリ内で対応プラグインが使える場合 → ネイティブの共有シートで保存先を選べる
+// 1) File System Access API が使える環境（PC版 Chrome/Edge 等）→ 保存先を選べるダイアログを表示
+// 2) それ以外で共有シートが使える環境（Android Chrome／iOSのホーム画面PWA等）→ 共有シートから保存先を選べる
+// 3) どちらも使えない場合 → 従来のダウンロード方式（ブラウザの既定のダウンロード先に保存）
+async function exportFile(blob, filename, accept) {
+  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+    const ok = await exportViaCapacitor(blob, filename);
+    if (ok) return;
+    // プラグイン未導入・失敗時は下のWeb標準APIへフォールバック
+  }
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: filename, accept }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      showToast("✅ 「" + filename + "」の書き出しが完了しました");
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") return; // ユーザーがキャンセル
+      // 失敗した場合は下のフォールバックへ続行
+    }
+  }
+  if (navigator.canShare) {
+    try {
+      const file = new File([blob], filename, {type: blob.type});
+      if (navigator.canShare({files:[file]})) {
+        await navigator.share({files:[file], title: filename});
+        showToast("✅ 「" + filename + "」の書き出しが完了しました");
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") return; // ユーザーがキャンセル
+      // 失敗した場合は下のフォールバックへ続行
+    }
+  }
+  try {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("✅ 「" + filename + "」をダウンロードフォルダに書き出しました");
+  } catch (err) {
+    alert("書き出しに失敗しました: " + err.message);
+  }
 }
 
 // ── DOM refs ──────────────────────────────────────────────
@@ -302,6 +446,9 @@ const listFsVal   = document.getElementById("list-fs-val");
 const editorFsRange = document.getElementById("editor-fs-range");
 const editorFsVal   = document.getElementById("editor-fs-val");
 const pinBtn      = document.getElementById("pin-btn");
+const categoryEl  = document.getElementById("note-category");
+const categoryBtn = document.getElementById("category-btn");
+const categoryModalBg = document.getElementById("category-modal-bg");
 
 // ── Auto-sort ─────────────────────────────────────────────
 function setAutoSort(key, doRender = true) {
@@ -343,6 +490,8 @@ function showDetail(id) {
   detailView.classList.add("active");
   titleEl.value = n.title;
   bodyEl.value  = n.body;
+  updateCategoryDatalist();
+  categoryEl.value = n.category || "";
   detailDate.textContent = "最終更新: " + fmt(n.updatedAt);
   updatePinBtn(n.pinned);
 }
@@ -355,14 +504,17 @@ function updatePinBtn(pinned) {
 let _lastListKey = "";
 function renderList() {
   const q    = searchEl.value.toLowerCase();
-  const base = sortMode
+  let base = sortMode
     ? [...notes]
     : notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  if (!sortMode && categoryFilter !== null) {
+    base = base.filter(n => (n.category||"").trim() === categoryFilter);
+  }
   const list = getSortedList(base);
 
   // 変化がなければスキップ
-  const key = list.map(n => n.id + ":" + n.updatedAt + ":" + n.pinned).join("|") +
-              "|sm:" + sortMode + "|q:" + q;
+  const key = list.map(n => n.id + ":" + n.updatedAt + ":" + n.pinned + ":" + n.category).join("|") +
+              "|sm:" + sortMode + "|q:" + q + "|cf:" + categoryFilter;
   if (key === _lastListKey) return;
   _lastListKey = key;
 
@@ -372,7 +524,7 @@ function renderList() {
     const li = document.createElement("li");
     li.id = "empty-msg";
     li.style.cssText = "color:var(--muted);font-size:13px;text-align:center;padding:40px 16px";
-    li.textContent = q ? "一致するメモがありません" : "メモがありません。＋ で作成してください。";
+    li.textContent = (q || categoryFilter !== null) ? "一致するメモがありません" : "メモがありません。＋ で作成してください。";
     frag.appendChild(li);
   } else {
     list.forEach(n => frag.appendChild(buildRow(n)));
@@ -413,6 +565,12 @@ function buildRow(n) {
   li.appendChild(rowTitle);
 
   if (!sortMode) {
+    // カテゴリタグ
+    const rowCat = document.createElement("span");
+    rowCat.className = "row-category";
+    rowCat.textContent = categoryLabel(n.category);
+    li.appendChild(rowCat);
+
     // 日時
     const rowDate = document.createElement("span");
     rowDate.className = "row-date";
@@ -543,6 +701,8 @@ sortToggle.addEventListener("click", () => {
   sortToggle.classList.toggle("active", sortMode);
   sortToggle.textContent = sortMode ? "完了" : "並替";
   searchEl.disabled = sortMode;
+  categoryBtn.disabled = sortMode;
+  categoryBtn.style.opacity = sortMode ? .4 : 1;
   hint.classList.toggle("show", sortMode);
   sortBar.style.display = sortMode ? "flex" : "none";
   _lastListKey = "";
@@ -554,6 +714,39 @@ document.getElementById("search-toggle").addEventListener("click", () => {
   const b = document.getElementById("search-wrap");
   b.style.display = b.style.display === "none" ? "block" : "none";
 });
+
+// ── Category filter ───────────────────────────────────────
+function updateCategoryBtnLabel() {
+  categoryBtn.classList.toggle("active", categoryFilter !== null);
+  categoryBtn.textContent = categoryFilter === null
+    ? "📁 カテゴリ"
+    : "📁 " + categoryLabel(categoryFilter);
+}
+function buildCategoryModal() {
+  const wrap = document.getElementById("category-option-list");
+  wrap.textContent = "";
+  const options = [{label:"すべて", value:null}, {label:"カテゴリなし", value:""}];
+  getAllCategories().forEach(c => options.push({label:c, value:c}));
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "cat-option" + (categoryFilter === opt.value ? " active" : "");
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      categoryFilter = opt.value;
+      updateCategoryBtnLabel();
+      categoryModalBg.classList.add("hidden");
+      _lastListKey = "";
+      renderList();
+    });
+    wrap.appendChild(btn);
+  });
+}
+categoryBtn.addEventListener("click", () => {
+  buildCategoryModal();
+  categoryModalBg.classList.remove("hidden");
+});
+document.getElementById("category-modal-close").addEventListener("click", () => categoryModalBg.classList.add("hidden"));
+categoryModalBg.addEventListener("click", e => { if (e.target === categoryModalBg) categoryModalBg.classList.add("hidden"); });
 
 // ── Settings modal ────────────────────────────────────────
 document.getElementById("settings-btn").addEventListener("click", () => modalBg.classList.remove("hidden"));
@@ -575,6 +768,7 @@ function persistEdit() {
   if (idx === -1) return;
   notes[idx].title     = titleEl.value.trim();
   notes[idx].body      = bodyEl.value;
+  notes[idx].category  = categoryEl.value.trim();
   notes[idx].updatedAt = new Date().toISOString();
   detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
   save();
@@ -612,6 +806,7 @@ function scheduleAutoSave() {
 }
 titleEl.addEventListener("input", scheduleAutoSave);
 bodyEl.addEventListener("input",  scheduleAutoSave);
+categoryEl.addEventListener("input", scheduleAutoSave);
 
 // ── List click delegation ─────────────────────────────────
 noteList.addEventListener("click", e => {
@@ -638,38 +833,39 @@ document.getElementById("add-btn").addEventListener("click", () => {
 
 // CSV
 document.getElementById("csv-export-btn").addEventListener("click", () => {
-  const rows = [["id","title","body","updatedAt","pinned"]];
+  const rows = [["id","title","body","category","updatedAt","pinned"]];
   notes.forEach(n => rows.push([
     n.id,
     '"' + (n.title||"").replace(/"/g,'""') + '"',
     '"' + (n.body ||"").replace(/"/g,'""') + '"',
+    '"' + (n.category ||"").replace(/"/g,'""') + '"',
     n.updatedAt,
     n.pinned ? "1" : "0"
   ]));
   const csv = rows.map(r => r.join(",")).join("\r\n");
-  download(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}),
-           "memo_" + today() + ".csv");
+  exportFile(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}),
+             "memo_" + today() + ".csv", {"text/csv": [".csv"]});
 });
 
 // JSON
 document.getElementById("json-export-btn").addEventListener("click", () => {
   const data = JSON.stringify(notes, null, 2);
-  download(new Blob([data], {type:"application/json;charset=utf-8"}),
-           "memo_" + today() + ".json");
+  exportFile(new Blob([data], {type:"application/json;charset=utf-8"}),
+             "memo_" + today() + ".json", {"application/json": [".json"]});
 });
 
 // HTML
 document.getElementById("html-export-btn").addEventListener("click", () => {
   const items = notes.map(n =>
-    `<article>\n  <h2>${esc(n.title)}</h2>\n  <time>${esc(n.updatedAt)}</time>\n  <pre>${esc(n.body)}</pre>\n</article>`
+    `<article>\n  <h2>${esc(n.title)}</h2>\n  <p class="category">${esc(categoryLabel(n.category))}</p>\n  <time>${esc(n.updatedAt)}</time>\n  <pre>${esc(n.body)}</pre>\n</article>`
   ).join("\n");
   const html = `<!DOCTYPE html>\n<html lang="ja">\n<head><meta charset="UTF-8"><title>メモ一覧</title>` +
     `<style>body{font-family:sans-serif;max-width:700px;margin:2em auto;padding:0 1em}` +
     `article{border:1px solid #ccc;border-radius:8px;margin-bottom:1.5em;padding:1em}` +
-    `h2{margin:0 0 .3em}time{font-size:.8em;color:#888}pre{white-space:pre-wrap;margin-top:.6em}</style>\n</head>\n<body>\n` +
+    `h2{margin:0 0 .3em}.category{font-size:.8em;color:#a67c00;margin:0 0 .3em}time{font-size:.8em;color:#888}pre{white-space:pre-wrap;margin-top:.6em}</style>\n</head>\n<body>\n` +
     `<h1>メモ一覧</h1>\n${items}\n</body>\n</html>`;
-  download(new Blob([html], {type:"text/html;charset=utf-8"}),
-           "memo_" + today() + ".html");
+  exportFile(new Blob([html], {type:"text/html;charset=utf-8"}),
+             "memo_" + today() + ".html", {"text/html": [".html"]});
 });
 
 function today() { return new Date().toISOString().slice(0,10); }
@@ -683,6 +879,7 @@ function mergeImported(imported) {
     if (!n.id) n.id = Date.now() + Math.random();
     if (!n.updatedAt) n.updatedAt = new Date().toISOString();
     if (n.pinned === undefined) n.pinned = false;
+    if (n.category === undefined || n.category === null) n.category = "";
     const ex = notes.findIndex(x => x.id === n.id);
     if (ex !== -1) notes[ex] = n;
     else notes.unshift(n);
@@ -699,16 +896,21 @@ document.getElementById("csv-import").addEventListener("change", function() {
   readFile(file, "UTF-8", text => {
     try {
       const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim());
+      const header = parseCSVLine(lines[0]).map(h => h.trim());
+      const idx = name => header.indexOf(name);
+      const iId = idx("id"), iTitle = idx("title"), iBody = idx("body"),
+            iCategory = idx("category"), iUpdated = idx("updatedAt"), iPinned = idx("pinned");
       const imported = [];
       for (let i=1; i<lines.length; i++) {
         const cols = parseCSVLine(lines[i]);
         if (cols.length < 3) continue;
         imported.push({
-          id: Number(cols[0]) || Date.now()+i,
-          title: cols[1]||"無題のメモ",
-          body:  cols[2]||"",
-          updatedAt: cols[3]||new Date().toISOString(),
-          pinned: cols[4]==="1"
+          id: Number(cols[iId]) || Date.now()+i,
+          title: (iTitle!==-1 && cols[iTitle]) || "無題のメモ",
+          body:  (iBody!==-1 && cols[iBody]) || "",
+          category: (iCategory!==-1 && cols[iCategory]) || "",
+          updatedAt: (iUpdated!==-1 && cols[iUpdated]) || new Date().toISOString(),
+          pinned: iPinned!==-1 && cols[iPinned]==="1"
         });
       }
       mergeImported(imported);
@@ -748,7 +950,9 @@ document.getElementById("html-import").addEventListener("change", function() {
         const title     = art.querySelector("h2")?.textContent || "無題のメモ";
         const body      = art.querySelector("pre")?.textContent || "";
         const updatedAt = art.querySelector("time")?.textContent || new Date().toISOString();
-        imported.push({id: Date.now()+Math.random(), title, body, updatedAt, pinned:false});
+        let category    = art.querySelector(".category")?.textContent || "";
+        if (category === "カテゴリなし") category = "";
+        imported.push({id: Date.now()+Math.random(), title, body, category, updatedAt, pinned:false});
       });
       mergeImported(imported);
       alert(imported.length + "件を取り込みました。");
