@@ -22,8 +22,6 @@ jobs:
           java-version: '21'
       - name: npm依存関係インストール
         run: npm ci
-      - name: 書き出し・戻るボタン・ステータスバー機能用プラグインをインストール
-        run: npm install @capacitor/filesystem @capacitor/share @capacitor/app @capacitor/status-bar
       - name: Web資産をAndroidプロジェクトへ同期
         run: npx cap sync android
       - name: gradlewに実行権限を付与
