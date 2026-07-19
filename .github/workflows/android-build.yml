@@ -3,12 +3,8 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,8 +22,8 @@ jobs:
           java-version: '21'
       - name: npm依存関係インストール
         run: npm ci
-      - name: 書き出し・戻るボタン機能用プラグインをインストール
-        run: npm install @capacitor/filesystem @capacitor/share @capacitor/app
+      - name: 書き出し・戻るボタン・ステータスバー機能用プラグインをインストール
+        run: npm install @capacitor/filesystem @capacitor/share @capacitor/app @capacitor/status-bar
       - name: Web資産をAndroidプロジェクトへ同期
         run: npx cap sync android
       - name: gradlewに実行権限を付与
@@ -39,22 +35,3 @@ jobs:
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-  deploy-pages:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: リポジトリ取得
-        uses: actions/checkout@v4
-      - name: Pages設定
-        uses: actions/configure-pages@v5
-      - name: www を公開用にアップロード
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: www
-      - name: GitHub Pagesへデプロイ
-        id: deployment
-        uses: actions/deploy-pages@v4
