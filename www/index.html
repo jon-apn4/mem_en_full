@@ -1741,10 +1741,10 @@ async function applyNativeStatusBar(resolved) {
     if (StatusBar) {
       if (isDark) {
         await StatusBar.setBackgroundColor({ color: "#1C1C1E" });
-        await StatusBar.setStyle({ style: "LIGHT" }); // 暗い背景 → 薄い(白)アイコン
+        await StatusBar.setStyle({ style: "DARK" }); // 暗い背景 → 薄い(白)アイコン（Style.Darkは白系アイコンを意味する）
       } else {
         await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
-        await StatusBar.setStyle({ style: "DARK" }); // 明るい背景 → 濃い(黒)アイコン
+        await StatusBar.setStyle({ style: "LIGHT" }); // 明るい背景 → 濃い(黒)アイコン（Style.Lightは黒系アイコンを意味する）
       }
     }
   } catch (err) {
