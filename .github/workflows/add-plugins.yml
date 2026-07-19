@@ -1,0 +1,27 @@
+name: Add Capacitor Plugins
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  add-plugins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Node.jsセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: プラグインを追加(package.json / package-lock.jsonを更新)
+        run: npm install --save @capacitor/filesystem @capacitor/share @capacitor/app @capacitor/status-bar
+
+      - name: 変更をコミット&プッシュ
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet && echo "変更なし" || git commit -m "Capacitorプラグインを追加"
+          git push
