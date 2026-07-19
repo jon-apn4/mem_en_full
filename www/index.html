@@ -1719,20 +1719,29 @@ function resolveTheme(setting) {
   } catch {}
   return "light";
 }
-// Android実機（Capacitor）でのステータスバー：@capacitor/status-bar が導入されていれば、
-// 背景色とアイコンの濃淡（Style.Dark=濃い文字／Style.Light=薄い文字）をテーマに合わせて更新する。
-// プラグイン未導入の場合は何もしない（HTMLのmetaタグはiOS Safari/PWA用でAndroidには効かないため）。
+// Android実機（Capacitor）でのステータスバー：端末のAndroidバージョンによって使われるプラグインが異なるため、
+// 新旧両方のAPIを呼んでおく（片方は端末側で無視されるだけなので併用しても問題ない）。
+// ・SystemBars（@capacitor/core同梱）… Android 15以降（エッジツーエッジ強制端末）向け
+// ・StatusBar（@capacitor/status-bar）… Android 14以前（従来方式が効く端末）向け
+// どちらのプラグインも未導入の場合は何もしない（HTMLのmetaタグはiOS Safari/PWA用でAndroidには効かないため）。
 async function applyNativeStatusBar(resolved) {
   try {
     const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
-    const { StatusBar } = plugins;
-    if (!StatusBar) return; // @capacitor/status-bar 未導入
-    if (resolved === "dark") {
-      await StatusBar.setBackgroundColor({ color: "#1C1C1E" });
-      await StatusBar.setStyle({ style: "LIGHT" }); // 暗い背景 → 薄い(白)アイコン
-    } else {
-      await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
-      await StatusBar.setStyle({ style: "DARK" }); // 明るい背景 → 濃い(黒)アイコン
+    const { SystemBars, StatusBar } = plugins;
+    const isDark = resolved === "dark";
+
+    if (SystemBars) {
+      // 暗い背景 → 薄い(白)アイコン／明るい背景 → 濃い(黒)アイコン
+      await SystemBars.setStyle({ style: isDark ? "DARK" : "LIGHT" });
+    }
+    if (StatusBar) {
+      if (isDark) {
+        await StatusBar.setBackgroundColor({ color: "#1C1C1E" });
+        await StatusBar.setStyle({ style: "LIGHT" }); // 暗い背景 → 薄い(白)アイコン
+      } else {
+        await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
+        await StatusBar.setStyle({ style: "DARK" }); // 明るい背景 → 濃い(黒)アイコン
+      }
     }
   } catch (err) {
     console.error("ステータスバーの更新に失敗しました:", err);
