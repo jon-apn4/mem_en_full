@@ -1,15 +1,8 @@
 <!DOCTYPE html>
-<!-- saved from url=(0031)https://jon-apn4.github.io/mem/ -->
 <html lang="ja">
 <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-meta">
-  <meta name="apple-mobile-web-app-title" content="メモ帳">
-  <meta name="theme-color" content="#FFFFFF" id="theme-color-meta">
-  <link rel="manifest" href="https://jon-apn4.github.io/mem/manifest.json">
-  <link rel="apple-touch-icon" href="https://jon-apn4.github.io/mem/icon-192.svg">
   <title>メモ帳</title>
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -1726,15 +1719,31 @@ function resolveTheme(setting) {
   } catch {}
   return "light";
 }
+// Android実機（Capacitor）でのステータスバー：@capacitor/status-bar が導入されていれば、
+// 背景色とアイコンの濃淡（Style.Dark=濃い文字／Style.Light=薄い文字）をテーマに合わせて更新する。
+// プラグイン未導入の場合は何もしない（HTMLのmetaタグはiOS Safari/PWA用でAndroidには効かないため）。
+async function applyNativeStatusBar(resolved) {
+  try {
+    const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+    const { StatusBar } = plugins;
+    if (!StatusBar) return; // @capacitor/status-bar 未導入
+    if (resolved === "dark") {
+      await StatusBar.setBackgroundColor({ color: "#1C1C1E" });
+      await StatusBar.setStyle({ style: "LIGHT" }); // 暗い背景 → 薄い(白)アイコン
+    } else {
+      await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
+      await StatusBar.setStyle({ style: "DARK" }); // 明るい背景 → 濃い(黒)アイコン
+    }
+  } catch (err) {
+    console.error("ステータスバーの更新に失敗しました:", err);
+  }
+}
 // テーマを実際に適用する（ステータスバー・テーマカラーも合わせて更新）
 function applyThemeSetting(setting) {
   themeSetting = setting;
   const resolved = resolveTheme(setting);
   document.documentElement.setAttribute("data-theme", resolved);
-  const themeColorMeta = document.getElementById("theme-color-meta");
-  const statusBarMeta  = document.getElementById("status-bar-meta");
-  if (themeColorMeta) themeColorMeta.setAttribute("content", resolved === "dark" ? "#1C1C1E" : "#FFFFFF");
-  if (statusBarMeta)  statusBarMeta.setAttribute("content", resolved === "dark" ? "black-translucent" : "default");
+  applyNativeStatusBar(resolved);
   updateThemeButtons();
 }
 function updateThemeButtons() {
@@ -1789,8 +1798,6 @@ function applyLanguage() {
   updateDtFmt();
   document.documentElement.lang = currentLang;
   document.title = t("appTabTitle");
-  const metaTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-  if (metaTitle) metaTitle.content = t("appTabTitle");
 
   document.getElementById("header-title-text").textContent = t("appTitle").replace(/^📝\s*/, "");
   sortToggle.textContent = t("sortBtn");
@@ -3374,8 +3381,6 @@ pushGuardState();
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(() => {});
 }
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 
 
