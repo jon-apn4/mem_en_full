@@ -5,19 +5,25 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-meta">
   <meta name="apple-mobile-web-app-title" content="メモ帳">
-  <meta name="theme-color" content="#1C1C1E">
+  <meta name="theme-color" content="#FFFFFF" id="theme-color-meta">
   <link rel="manifest" href="https://jon-apn4.github.io/mem/manifest.json">
   <link rel="apple-touch-icon" href="https://jon-apn4.github.io/mem/icon-192.svg">
   <title>メモ帳</title>
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     :root {
-      --bg:#1C1C1E; --hd:#2C2C2E; --hover:#3A3A3C; --border:#3A3A3C;
-      --accent:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
+      --bg:#FFFFFF; --hd:#F7F7F8; --hover:#C4C4CB; --border:#BDBDC4;
+      --accent:#FFD60A; --accent-fg:#927B06; --text:#1C1C1E; --muted:#6E6E73; --danger:#FF3B30;
+      --accent-rgb:255,214,10; --overlay-rgb:0,0,0;
       --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
       --list-fs:18px; --editor-fs:18px; --row-min-h:36px;
+    }
+    html[data-theme="dark"] {
+      --bg:#1C1C1E; --hd:#2C2C2E; --hover:#3A3A3C; --border:#3A3A3C;
+      --accent:#FFD60A; --accent-fg:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
+      --accent-rgb:255,214,10; --overlay-rgb:255,255,255;
     }
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
@@ -26,55 +32,87 @@
 
     /* ── HEADER ── */
     header { display:flex; align-items:center; gap:6px;
-      padding:calc(10px + var(--safe-top)) 10px 10px;
+      padding:calc(18px + var(--safe-top)) 10px 2px;
       background:var(--hd); border-bottom:1px solid var(--border); flex-shrink:0; }
-    #header-title { flex-shrink:0; font-size:15px; font-weight:700; text-align:left;
+    #header-title { flex-shrink:0; font-size:17px; font-weight:700; text-align:left;
       white-space:nowrap; }
     #header-actions { flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end;
       gap:5px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     #header-actions::-webkit-scrollbar { display:none; }
-    .hbtn { background:none; border:none; color:var(--accent); font-size:13px; font-weight:700;
+    .hbtn { background:none; border:none; color:var(--accent-fg); font-size:13px; font-weight:700;
       cursor:pointer; padding:5px 6px; border-radius:7px; -webkit-tap-highlight-color:transparent;
       white-space:nowrap; flex-shrink:0; }
-    .seg-btn { background:none; border:1.5px solid var(--accent); color:var(--accent);
+    .seg-btn { background:none; border:1.5px solid var(--accent-fg); color:var(--accent-fg);
       font-size:11px; font-weight:700; cursor:pointer; padding:4px 8px; border-radius:7px;
       -webkit-tap-highlight-color:transparent; white-space:nowrap; flex-shrink:0; }
     .seg-btn.active { background:var(--accent); color:#000; }
-    #add-btn { background:var(--accent); color:#000; border-radius:8px; padding:5px 8px; }
-    #back-btn { font-size:14px; padding:4px 0; }
-    #detail-date { flex:1; font-size:10px; color:var(--muted); text-align:center; }
-    #del-note-btn { color:var(--danger); }
-    #save-btn { background:var(--accent); color:#000; border-radius:8px; font-size:12px; padding:5px 10px; }
+    #add-btn { background:var(--accent); color:#000; border-radius:8px; padding:0 8px;
+      height:24px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; }
+    #back-btn { font-size:14px; padding:4px 0; flex-shrink:0; }
+    #detail-right-group { flex:1; min-width:0; display:flex; align-items:center;
+      justify-content:flex-end; gap:4px; overflow:hidden; }
+    #detail-charcount { font-size:12px; color:#fff; white-space:nowrap; overflow:hidden;
+      text-overflow:ellipsis; min-width:0; flex-shrink:1; background:rgba(var(--overlay-rgb),.08);
+      border:1px solid rgba(var(--overlay-rgb),.22); border-radius:5px; padding:1px 6px; line-height:1.5;
+      margin-right:4px; }
+    #detail-charcount:empty { display:none; }
+    #category-date-display { flex-shrink:0; font-size:10px; color:var(--muted); white-space:nowrap; }
+    .gear-btn { font-size:25px; line-height:1; padding:0 1px; display:flex;
+      align-items:center; justify-content:center; align-self:stretch; }
+    #save-btn { background:var(--accent); color:#000; border-radius:8px; font-size:12px;
+      height:24px; line-height:24px; padding:0 10px; }
+    #save-btn .save-icon { text-shadow:
+      -1px -1px 0 rgba(28,28,30,.85), 1px -1px 0 rgba(28,28,30,.85),
+      -1px  1px 0 rgba(28,28,30,.85), 1px  1px 0 rgba(28,28,30,.85),
+       0px -1px 0 rgba(28,28,30,.85), 0px  1px 0 rgba(28,28,30,.85),
+      -1px  0px 0 rgba(28,28,30,.85), 1px  0px 0 rgba(28,28,30,.85); }
+    #pin-btn { font-size:15px; height:24px; line-height:24px; width:26px; padding:0; text-align:center; box-sizing:border-box; }
+    #pin-btn.pin-active { background:rgba(var(--accent-rgb),.1); border-radius:8px;
+      box-shadow:inset 0 0 0 1.5px var(--accent-fg); }
+    #lock-btn { font-size:15px; height:24px; line-height:24px; width:26px; padding:0; text-align:center; box-sizing:border-box; }
+    #lock-btn.lock-active { background:rgba(var(--accent-rgb),.1); border-radius:8px;
+      box-shadow:inset 0 0 0 1.5px var(--accent-fg); }
 
     /* ── SEARCH ── */
-    #search-wrap { padding:6px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
-    #category-filter-bar { display:none; align-items:center; gap:8px; padding:6px 12px;
+    #search-wrap { display:none; align-items:center; gap:8px; padding:3px 12px;
+      border-bottom:1px solid var(--border); flex-shrink:0; }
+    #search-wrap.show { display:flex; }
+    #search-label { flex:1; display:flex; align-items:center; gap:6px; min-width:0; }
+    #search-prefix { font-size:12px; color:var(--text); white-space:nowrap; flex-shrink:0; }
+    #search-clear { background:none; border:none; color:var(--text); font-size:12px;
+      cursor:pointer; padding:2px 4px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    #category-filter-bar { display:none; align-items:center; gap:8px; padding:3px 12px;
       border-bottom:1px solid var(--border); flex-shrink:0; }
     #category-filter-bar.show { display:flex; }
     #category-filter-label { flex:1; display:flex; align-items:center; gap:6px; min-width:0;
-      overflow:hidden; }
-    #category-filter-prefix { font-size:12px; color:var(--muted); white-space:nowrap; flex-shrink:0; }
-    #category-filter-name { font-size:10px; color:var(--accent); background:rgba(255,214,10,.1);
-      border:1px solid rgba(255,214,10,.3); border-radius:6px; padding:2px 8px; font-weight:700;
+      overflow:hidden; cursor:pointer; }
+    #category-filter-prefix { font-size:12px; color:var(--text); white-space:nowrap; flex-shrink:0; }
+    #category-filter-name { font-size:10px; color:var(--accent-fg); background:rgba(var(--accent-rgb),.1);
+      border:1px solid rgba(var(--accent-rgb),.3); border-radius:6px; padding:2px 8px; font-weight:700;
       flex:0 1 auto; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    #category-filter-clear { background:none; border:none; color:var(--muted); font-size:12px;
+    #category-filter-clear { background:none; border:none; color:var(--text); font-size:12px;
       cursor:pointer; padding:2px 4px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
-    #search { width:100%; background:var(--hover); border:none; border-radius:7px;
-      color:var(--text); padding:6px 12px; font-size:13px; outline:none; -webkit-appearance:none; }
+    #search { flex:1; min-width:0; background:var(--hover); border:none; border-radius:7px;
+      color:var(--text); padding:3px 12px; font-size:13px; outline:none; -webkit-appearance:none; }
     #search::placeholder { color:var(--muted); }
 
     /* ── SORT BAR ── */
-    #sort-bar { display:flex; align-items:center; gap:6px; padding:5px 10px;
+    #sort-bar { display:flex; align-items:center; gap:6px; padding:3px 10px;
       border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
     .sort-btn { background:none; border:1px solid var(--border); border-radius:6px;
-      color:var(--muted); font-size:11px; padding:3px 8px; cursor:pointer; white-space:nowrap;
+      color:var(--text); font-size:12px; padding:3px 8px; cursor:pointer; white-space:nowrap;
       -webkit-tap-highlight-color:transparent; flex-shrink:0; }
-    .sort-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(255,214,10,.08); }
-    #sort-bar-label { font-size:11px; color:var(--muted); flex-shrink:0; }
+    .sort-btn.active { border-color:var(--accent-fg); color:var(--accent-fg); background:rgba(var(--accent-rgb),.08); }
+    #sb-manual.active { background:var(--accent); color:#000; border-color:var(--accent); }
+    #sort-bar-label { font-size:12px; color:var(--text); flex-shrink:0; }
+    #sort-bar-clear { background:none; border:none; color:var(--text); font-size:12px;
+      cursor:pointer; padding:3px 6px; margin-left:auto; flex-shrink:0;
+      -webkit-tap-highlight-color:transparent; white-space:nowrap; }
 
     /* ── LIST ── */
     #list-view { display:flex; flex-direction:column; flex:1; overflow:hidden; }
-    #note-list { list-style:none; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
+    #note-list { list-style:none; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;
+      padding-bottom:120px; }
 
     .note-row {
       display:flex; align-items:center;
@@ -86,19 +124,35 @@
     }
     .note-row:active { background:var(--hover); }
     .note-row.dragging { opacity:.35; background:var(--hover); }
-    .note-row.drag-over-top    { border-top:2px solid var(--accent); }
-    .note-row.drag-over-bottom { border-bottom:2px solid var(--accent); }
-    .note-row.sort-mode { touch-action:none; background:rgba(255,214,10,.04); }
-    .note-row.pinned-row { background:rgba(255,214,10,.06); }
+    .note-row.drag-over-top    { border-top:2px solid var(--accent-fg); }
+    .note-row.drag-over-bottom { border-bottom:2px solid var(--accent-fg); }
+    .note-row.sort-mode { touch-action:none; background:rgba(var(--accent-rgb),.04); }
+    .note-row.pinned-row { background:rgba(var(--accent-rgb),.06); }
 
     .drag-handle { color:var(--muted); font-size:16px; flex-shrink:0;
       cursor:grab; padding:0 2px; display:none; }
     .note-row.sort-mode .drag-handle { display:block; }
 
-    .pin-icon { font-size:11px; flex-shrink:0; color:var(--accent); }
-    .row-icon  { font-size:13px; flex-shrink:0; }
+    .row-lock { font-size:clamp(10px, calc(var(--list-fs) * 0.65), 16px); flex-shrink:0; color:var(--accent-fg);
+      display:inline-block; transform:scale(1.1); margin-left:-3px; }
+    .row-lock.row-lock-empty { visibility:hidden; }
+    .row-toggle { background:none; border:none; font-size:14px; line-height:1;
+      width:26px; height:calc(var(--cat-fs,12px) * 1.3 + 2px); padding:0; text-align:center; box-sizing:border-box;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:6px; cursor:pointer; flex-shrink:0;
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+    .row-toggle.active { background:rgba(var(--accent-rgb),.1); box-shadow:inset 0 0 0 1.5px var(--accent-fg); }
+    /* 長押しモード中：ピン⇔ロックアイコンの間隔だけ通常の行間(6px)より狭め、4pxにする */
+    .row-toggle[data-type="lock"] { margin-left:-2px; }
+    .row-icon { width:16px; height:16px; flex-shrink:0; margin:0 2px;
+      display:inline-flex; align-items:center; justify-content:center; }
+    .row-icon::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+    .row-icon.row-icon-pin { font-size:clamp(10px, calc(var(--list-fs) * 0.65), 16px); line-height:1; overflow:hidden; }
+    .row-icon.row-icon-pin::before { content:none; }
+    .pin-glyph { display:inline-block; font-size:1.6em; line-height:1; }
     .row-title { flex:1; font-size:var(--list-fs); font-weight:500;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .row-title.row-title-fallback { color:var(--muted); }
     .row-date  { font-size:10px; color:var(--muted); flex-shrink:0; }
     .row-del   { background:none; border:none; color:var(--muted); font-size:18px;
       cursor:pointer; padding:0 3px; line-height:1; flex-shrink:0;
@@ -110,10 +164,16 @@
     #detail-view { display:none; flex-direction:column; flex:1; overflow:hidden; }
     #detail-view.active { display:flex; }
     #editor { display:flex; flex-direction:column; flex:1;
-      padding:14px 16px calc(14px + var(--safe-bottom)); gap:10px; overflow:hidden; }
-    #note-title { background:transparent; border:none; border-bottom:1px solid var(--border);
-      outline:none; color:var(--text); font-size:calc(var(--editor-fs) + 5px); font-weight:700;
-      font-family:inherit; padding-bottom:8px; width:100%; }
+      padding:14px 16px calc(14px + var(--safe-bottom)); gap:6px; overflow:hidden; }
+    #title-row { display:flex; align-items:baseline; gap:6px;
+      border-bottom:1px solid var(--border); padding-bottom:4px; }
+    .field-label { color:var(--text); font-size:var(--editor-fs); font-weight:700;
+      white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center;
+      justify-content:center; height:1.2em; line-height:1; padding:0 6px;
+      background:rgba(var(--overlay-rgb),.08); border:1px solid rgba(var(--overlay-rgb),.25); border-radius:5px; }
+    #note-title { background:transparent; border:none; outline:none; color:var(--text);
+      font-size:var(--editor-fs); font-weight:700;
+      font-family:inherit; width:100%; min-width:0; }
     #note-body  { flex:1; background:transparent; border:none; outline:none; color:var(--text);
       font-size:var(--editor-fs); line-height:var(--editor-lh,1.45); font-family:inherit; resize:none; width:100%; }
     #note-title::placeholder,#note-body::placeholder { color:var(--muted); }
@@ -129,14 +189,23 @@
     .modal-row { display:flex; align-items:center; padding:10px 0;
       border-bottom:1px solid var(--border); gap:10px; flex-wrap:wrap; }
     .modal-row:last-child { border-bottom:none; }
+    #modal-bg .modal-row:not(.lang-row) { padding:5px 0; }
+    #editor-settings-modal-bg .modal-row { padding:5px 0; }
     .modal-label { font-size:13px; white-space:nowrap; }
-    .modal-row input[type=range] { flex:1; accent-color:var(--accent); min-width:80px; }
-    .modal-row .val { font-size:12px; color:var(--accent); min-width:34px; text-align:right; }
-    .toggle-switch { position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+    .modal-row input[type=range] { flex:1; min-width:80px; height:28px; margin:0;
+      -webkit-appearance:none; appearance:none; background:transparent; }
+    .modal-row input[type=range]::-webkit-slider-runnable-track { height:13px; border-radius:6.5px; background:var(--hover); }
+    .modal-row input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none;
+      width:9px; height:18px; border-radius:3px; background:var(--accent); border:none; margin-top:-2.5px; cursor:pointer; }
+    .modal-row input[type=range]::-moz-range-track { height:13px; border-radius:6.5px; background:var(--hover); }
+    .modal-row input[type=range]::-moz-range-thumb { width:9px; height:18px; border-radius:3px;
+      background:var(--accent); border:none; cursor:pointer; }
+    .modal-row .val { font-size:12px; color:var(--accent-fg); min-width:34px; text-align:right; }
+    .toggle-switch { position:relative; display:inline-block; width:42px; height:28px; flex-shrink:0; }
     .toggle-switch input { opacity:0; width:0; height:0; }
-    .toggle-slider { position:absolute; inset:0; background:var(--hover); border-radius:24px;
+    .toggle-slider { position:absolute; inset:0; background:var(--hover); border-radius:28px;
       cursor:pointer; transition:background .2s; }
-    .toggle-slider::before { content:""; position:absolute; width:18px; height:18px; left:3px; top:3px;
+    .toggle-slider::before { content:""; position:absolute; width:18px; height:18px; left:3px; top:5px;
       background:#fff; border-radius:50%; transition:transform .2s; }
     .toggle-switch input:checked + .toggle-slider { background:var(--accent); }
     .toggle-switch input:checked + .toggle-slider::before { transform:translateX(18px); }
@@ -146,35 +215,59 @@
       font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; min-width:80px; }
     .modal-btn.export { background:var(--accent); color:#000; }
     .modal-btn.import { background:var(--hover); color:var(--text); }
-    .modal-section-title { font-size:11px; color:var(--muted); width:100%; padding-top:4px; }
+    .lang-btn { background:var(--hover); color:var(--text); flex:0 0 auto; min-width:0; font-size:11px;
+      height:28px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; }
+    .lang-btn.active { background:var(--accent); color:#000; }
+    #editor-override-row { flex-wrap:nowrap; min-height:26px; }
+    .override-badge { color:var(--accent-fg); background:rgba(var(--accent-rgb),.1); border:1px solid rgba(var(--accent-rgb),.3);
+      border-radius:6px; padding:0 9px; height:26px; box-sizing:border-box; display:inline-flex;
+      align-items:center; font-size:11px; font-weight:700; white-space:nowrap;
+      flex-shrink:1; overflow:hidden; text-overflow:ellipsis; }
+    #editor-override-reset-btn { height:26px; box-sizing:border-box; display:inline-flex;
+      align-items:center; justify-content:center; }
+    .modal-section-title { font-size:13px; color:var(--text); white-space:nowrap; flex-shrink:0; }
+    .io-icon { width:14px; height:14px; vertical-align:-2px; margin-right:5px; color:var(--accent-fg); flex-shrink:0; }
     .io-group { display:flex; gap:6px; flex-wrap:wrap; width:100%; }
     .io-group .modal-btn { min-width:calc(50% - 3px); flex:1 1 calc(50% - 3px); }
+    .io-row { display:flex; gap:6px; flex-wrap:nowrap; flex:1; min-width:0; }
+    .io-row .modal-btn { flex:1; min-width:0; height:28px; padding:0 4px;
+      display:inline-flex; align-items:center; justify-content:center; }
+    .modal-row.stack { flex-direction:column; align-items:stretch; }
+    .io-option { display:flex; flex-direction:column; width:100%; margin-top:8px; padding-left:20px; }
+    .io-option .modal-btn { width:100%; height:28px; padding:0 10px; white-space:nowrap; overflow:hidden;
+      text-overflow:ellipsis; line-height:28px; display:flex; align-items:center; justify-content:center; }
+    .io-desc { font-size:11px; color:var(--muted); line-height:1.4; padding:4px 2px 0 14px; }
 
     /* （並替／検索／カテゴリボタンは .seg-btn に統一） */
 
     /* ── カテゴリ ── */
-    .row-category { font-size:10px; color:var(--accent); background:rgba(255,214,10,.1);
-      border:1px solid rgba(255,214,10,.3); border-radius:5px; padding:1px 5px; flex-shrink:0;
-      white-space:nowrap; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
+    .row-category { font-size:var(--cat-fs,12px); color:var(--accent-fg); background:rgba(var(--accent-rgb),.1);
+      border:1px solid rgba(var(--accent-rgb),.3); border-radius:0.4em; padding:0.05em 0.35em; flex-shrink:0;
+      line-height:1.2; white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis; }
     .note-row.sort-mode .row-category { display:none; }
-    #note-category { background:transparent; border:none; border-bottom:1px solid var(--border);
-      outline:none; color:var(--accent); font-size:12px; font-family:inherit;
-      padding-bottom:6px; width:100%; }
+    #note-category { background:transparent; border:none;
+      outline:none; color:var(--accent-fg); font-size:12px; font-family:inherit;
+      width:100%; min-width:0; }
     #note-category::placeholder { color:var(--muted); }
-    #category-field-wrap { position:relative; }
-    #category-suggest { position:absolute; top:100%; left:5ch; right:10px; margin-top:2px;
-      background:rgba(255,214,10,.1); border:1px solid rgba(255,214,10,.3); border-radius:5px; z-index:50;
+    #category-field-wrap { position:relative; display:flex; align-items:baseline; gap:6px;
+      border-bottom:1px solid var(--border); padding-bottom:4px; }
+    .field-label-category { color:var(--text); font-size:12px; font-weight:700;
+      white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center;
+      justify-content:center; height:1.38em; line-height:1; padding:0 6px;
+      background:rgba(var(--overlay-rgb),.08); border:1px solid rgba(var(--overlay-rgb),.25); border-radius:5px; }
+    #category-suggest { position:absolute; top:100%; left:0; right:10px; margin-top:2px;
+      background:rgba(var(--accent-rgb),.1); border:1px solid rgba(var(--accent-rgb),.3); border-radius:5px; z-index:50;
       max-height:160px; overflow-y:auto; font-size:12px; line-height:1.1;
       display:none; box-shadow:0 4px 12px rgba(0,0,0,.35); backdrop-filter:blur(6px); }
     #category-suggest.show { display:block; }
     .cat-suggest-item { display:block; width:100%; text-align:left; padding:4px 8px;
-      background:none; border:none; color:var(--accent); font-size:12px; line-height:1.1;
+      background:none; border:none; color:var(--accent-fg); font-size:12px; line-height:1.1;
       cursor:pointer; -webkit-tap-highlight-color:transparent; }
-    .cat-suggest-item:active, .cat-suggest-item:hover { background:rgba(255,214,10,.2); }
+    .cat-suggest-item:active, .cat-suggest-item:hover { background:rgba(var(--accent-rgb),.2); }
     .cat-option { display:block; width:100%; text-align:left; padding:9px 10px; margin-bottom:6px;
       border:1px solid var(--border); border-radius:8px; background:none; color:var(--text);
       font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-    .cat-option.active { border-color:var(--accent); color:var(--accent); background:rgba(255,214,10,.08); }
+    .cat-option.active { border-color:var(--accent-fg); color:var(--accent-fg); background:rgba(var(--accent-rgb),.08); }
 
     /* ── トースト通知 ── */
     #toast { position:fixed; left:50%; bottom:calc(20px + var(--safe-bottom));
@@ -190,6 +283,26 @@
       padding:3px 0 2px; flex-shrink:0; display:none; }
     #longpress-hint.show { display:block; }
   </style>
+  <script>
+  (function() {
+    "use strict";
+    function resolveTheme(setting) {
+      if (setting === "light" || setting === "dark") return setting;
+      // "system" または未設定：端末のテーマ設定を読めればそれに合わせ、読めなければライトを既定にする
+      try {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+      } catch {}
+      return "light";
+    }
+    var themeSetting = "system";
+    try {
+      var s = JSON.parse(localStorage.getItem("memo-pwa-settings"));
+      if (s && (s.theme === "light" || s.theme === "dark" || s.theme === "system")) themeSetting = s.theme;
+    } catch {}
+    var resolved = resolveTheme(themeSetting);
+    document.documentElement.setAttribute("data-theme", resolved);
+  })();
+  </script>
 </head>
 <body>
 <div id="app">
@@ -197,28 +310,31 @@
   <!-- LIST VIEW -->
   <div id="list-view">
     <header>
-      <span id="header-title">📝 メモ帳</span>
+      <span id="header-title"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="1.8" style="vertical-align:-3px;margin-right:4px;flex-shrink:0;stroke:var(--accent-fg)"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg><span id="header-title-text">メモ帳</span></span>
       <div id="header-actions">
         <button class="seg-btn" id="sort-toggle">並替</button><button class="seg-btn" id="search-toggle">検索</button><button class="seg-btn" id="category-btn">カテゴリ</button>
-        <button class="hbtn" id="settings-btn">⚙️</button>
+        <button class="hbtn gear-btn" id="settings-btn">⚙️</button>
         <button class="hbtn" id="add-btn">＋ 新規</button>
       </div>
     </header>
-    <div id="search-wrap" style="display:none">
-      <input id="search" type="search" placeholder="🔍 検索…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div id="search-wrap">
+      <span id="search-label"><span id="search-prefix">🔍 検索：</span><input id="search" type="search" placeholder="検索…" autocomplete="off" autocorrect="off" spellcheck="false"></span>
+      <button id="search-clear">✕ 解除</button>
     </div>
     <div id="category-filter-bar">
-      <span id="category-filter-label"><span id="category-filter-prefix">📁 表示中のカテゴリ：</span><span id="category-filter-name"></span></span>
+      <span id="category-filter-label"><span id="category-filter-prefix">📁 カテゴリ：</span><span id="category-filter-name"></span></span>
       <button id="category-filter-clear">✕ 解除</button>
     </div>
     <!-- ソートバー -->
     <div id="sort-bar" style="display:none">
       <span id="sort-bar-label">並順:</span>
-      <button class="sort-btn" id="sb-manual">手動</button>
-      <button class="sort-btn" id="sb-date-toggle">日時↓</button>
       <button class="sort-btn" id="sb-title-toggle">題名↓</button>
+      <button class="sort-btn" id="sb-category-toggle">カテゴリ↓</button>
+      <button class="sort-btn" id="sb-date-toggle">日時↓</button>
+      <button class="sort-btn" id="sb-manual">手動</button>
+      <button id="sort-bar-clear">✕ 解除</button>
     </div>
-    <div id="longpress-hint">≡ ドラッグして並べ替え　／　「完了」で終了</div>
+    <div id="longpress-hint">≡ ドラッグで並べ替え／「完了」で終了</div>
     <ul id="note-list"></ul>
   </div>
 
@@ -226,35 +342,58 @@
   <div id="detail-view">
     <header>
       <button class="hbtn" id="back-btn">← 一覧</button>
-      <span id="detail-date"></span>
-      <button class="hbtn" id="pin-btn">📌</button>
-      <button class="hbtn" id="editor-settings-btn">⚙️</button>
-      <button class="hbtn" id="save-btn">💾 保存</button>
-      <button class="hbtn" id="del-note-btn">削除</button>
+      <div id="detail-right-group">
+        <span id="detail-charcount"></span>
+        <button class="hbtn" id="pin-btn">📌</button>
+        <button class="hbtn" id="lock-btn">🔒</button>
+        <button class="hbtn gear-btn" id="editor-settings-btn">⚙️</button>
+        <button class="hbtn" id="save-btn"><span class="save-icon">💾</span> 保存</button>
+      </div>
     </header>
     <div id="editor">
-      <input id="note-title" type="text" placeholder="ここに題名を書いてください">
+      <div id="title-row">
+        <span id="title-label" class="field-label">題名</span>
+        <input id="note-title" type="text" placeholder="" autocomplete="off" autocorrect="off">
+      </div>
       <div id="category-field-wrap">
-        <input id="note-category" type="text" placeholder="カテゴリ（未入力の場合は「カテゴリなし」）" autocomplete="off">
+        <span id="category-label" class="field-label-category">カテゴリ</span>
+        <input id="note-category" type="text" placeholder="" autocomplete="off">
+        <span id="category-date-display"></span>
         <div id="category-suggest"></div>
       </div>
-      <textarea id="note-body" placeholder="ここに書き始めてください…"></textarea>
+      <textarea id="note-body" placeholder="本文を入力…" autocomplete="off" autocorrect="off"></textarea>
     </div>
   </div>
 
   <!-- EDITOR SETTINGS MODAL（フォントサイズ・行間）-->
   <div class="modal-bg hidden" id="editor-settings-modal-bg">
     <div class="modal">
-      <h2>🔤 文字設定</h2>
+      <h2 id="editor-settings-title">⚙️ 設定</h2>
+      <div class="modal-row" id="editor-override-row">
+        <span class="override-badge" id="editor-override-badge" style="display:none">このメモ固有で調整値を保持中</span>
+        <button type="button" class="seg-btn" id="editor-override-reset-btn" style="margin-left:auto">既定値に戻す</button>
+      </div>
       <div class="modal-row">
-        <span class="modal-label">フォントサイズ</span>
+        <span class="modal-label" id="editor-fs-label">文字サイズ</span>
         <input type="range" id="editor-fs-range" min="10" max="26" step="1" value="18">
         <span class="val" id="editor-fs-val">18px</span>
       </div>
       <div class="modal-row">
-        <span class="modal-label">行間</span>
+        <span class="modal-label" id="editor-lh-label">行間</span>
         <input type="range" id="editor-lh-range" min="1.0" max="2.2" step="0.05" value="1.6">
         <span class="val" id="editor-lh-val">1.60</span>
+      </div>
+      <div class="modal-row stack">
+        <div class="io-option">
+          <button type="button" class="modal-btn export" id="apply-global-default-btn">この値を全メモの既定値にする</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-label" id="char-count-label">文字数を表示</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="char-count-toggle">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
       <button class="modal-close" id="editor-settings-modal-close">閉じる</button>
     </div>
@@ -263,42 +402,84 @@
   <!-- SETTINGS MODAL -->
   <div class="modal-bg hidden" id="modal-bg">
     <div class="modal">
-      <h2>⚙️ 設定</h2>
+      <h2 id="settings-title">⚙️ 設定</h2>
       <div class="modal-row">
-        <span class="modal-label">一覧のフォントサイズ</span>
+        <span class="modal-label" id="theme-setting-label">テーマ</span>
+        <div class="io-row">
+          <button class="modal-btn lang-btn" id="theme-light">ライトモード</button>
+          <button class="modal-btn lang-btn" id="theme-dark">ダークモード</button>
+          <button class="modal-btn lang-btn" id="theme-system">端末に合わせる</button>
+        </div>
+      </div>
+      <div class="modal-row lang-row">
+        <span class="modal-label" id="language-label">Language/日本語</span>
+        <div class="io-group lang-group" style="justify-content:flex-end">
+          <button class="modal-btn lang-btn" id="lang-ja" data-lang="ja">日本語 (JP)</button>
+          <button class="modal-btn lang-btn" id="lang-en" data-lang="en">English (EN)</button>
+          <button class="modal-btn lang-btn" id="lang-es" data-lang="es">Español (ES)</button>
+          <button class="modal-btn lang-btn" id="lang-pt" data-lang="pt">Português (PT)</button>
+          <button class="modal-btn lang-btn" id="lang-ko" data-lang="ko">한국어 (KO)</button>
+          <button class="modal-btn lang-btn" id="lang-id" data-lang="id">Bahasa Indonesia (ID)</button>
+          <button class="modal-btn lang-btn" id="lang-zh" data-lang="zh">繁體中文 (TW)</button>
+          <button class="modal-btn lang-btn" id="lang-th" data-lang="th">ไทย (TH)</button>
+          <button class="modal-btn lang-btn" id="lang-vi" data-lang="vi">Tiếng Việt (VI)</button>
+          <button class="modal-btn lang-btn" id="lang-de" data-lang="de">Deutsch (DE)</button>
+          <button class="modal-btn lang-btn" id="lang-hi" data-lang="hi">हिन्दी (HI)</button>
+          <button class="modal-btn lang-btn" id="lang-fr" data-lang="fr">Français (FR)</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-label" id="list-fs-label">一覧の文字サイズ</span>
         <input type="range" id="list-fs-range" min="10" max="22" step="1" value="18">
         <span class="val" id="list-fs-val">18px</span>
       </div>
       <div class="modal-row">
-        <span class="modal-label">一覧の行間</span>
+        <span class="modal-label" id="list-lh-label">一覧の行間</span>
         <input type="range" id="list-lh-range" min="1.4" max="3.0" step="0.1" value="1.8">
         <span class="val" id="list-lh-val">1.8</span>
       </div>
       <div class="modal-row">
-        <span class="modal-label">一覧に日時を表示</span>
+        <span class="modal-label" id="date-field-setting-label">表示する日時</span>
+        <div class="io-row">
+          <button class="modal-btn lang-btn" id="date-field-created">作成日時</button>
+          <button class="modal-btn lang-btn" id="date-field-updated">更新日時</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-label" id="show-date-label">一覧に日時を表示</span>
         <label class="toggle-switch">
           <input type="checkbox" id="show-date-toggle" checked>
           <span class="toggle-slider"></span>
         </label>
       </div>
       <div class="modal-row">
-        <span class="modal-section-title">📤 書き出し</span>
-        <div class="io-group">
-          <button class="modal-btn export" id="csv-export-btn">CSV</button>
-          <button class="modal-btn export" id="json-export-btn">JSON</button>
-          <button class="modal-btn export" id="html-export-btn">HTML</button>
+        <span class="modal-label" id="lock-hide-label">🔒メモを非表示</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="lock-hide-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="modal-row stack">
+        <span class="modal-section-title" id="export-label"><svg class="io-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 9l5 -5l5 5"/><path d="M12 4l0 12"/></svg><span id="export-label-text">書き出し</span></span>
+        <div class="io-option">
+          <button class="modal-btn export" id="mem-export-btn">引き継ぎデータを書き出し(.mem) ［推奨］</button>
+          <p class="io-desc" id="mem-export-desc">作成・更新日時やカテゴリも復元できます</p>
+        </div>
+        <div class="io-option">
+          <button class="modal-btn export" id="txt-export-btn">汎用テキストとして書き出し</button>
+          <p class="io-desc" id="txt-export-desc">本文を他アプリでも読める形式で保存</p>
         </div>
       </div>
-      <div class="modal-row">
-        <span class="modal-section-title">📥 取り込み</span>
-        <div class="io-group">
-          <button class="modal-btn import" id="csv-import-btn">CSV</button>
-          <button class="modal-btn import" id="json-import-btn">JSON</button>
-          <button class="modal-btn import" id="html-import-btn">HTML</button>
+      <div class="modal-row stack">
+        <span class="modal-section-title" id="import-label"><svg class="io-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 11l5 5l5 -5"/><path d="M12 4l0 12"/></svg><span id="import-label-text">取り込み</span></span>
+        <div class="io-option">
+          <button class="modal-btn export" id="mem-import-btn">引き継ぎデータを取り込み(.mem)</button>
         </div>
-        <input type="file" id="csv-import" accept=".csv" style="display:none">
-        <input type="file" id="json-import" accept=".json" style="display:none">
-        <input type="file" id="html-import" accept=".html,.htm" style="display:none">
+        <input type="file" id="mem-import" accept=".memo,.mem" style="display:none">
+        <div class="io-option">
+          <button class="modal-btn export" id="keep-import-btn">Google Keepデータを取り込み(.zip)</button>
+        </div>
+        <input type="file" id="keep-import" accept=".zip" style="display:none">
       </div>
       <button class="modal-close" id="modal-close">閉じる</button>
     </div>
@@ -307,9 +488,21 @@
   <!-- CATEGORY MODAL -->
   <div class="modal-bg hidden" id="category-modal-bg">
     <div class="modal">
-      <h2>📁 カテゴリで絞り込み</h2>
+      <h2 id="category-modal-title">📁 カテゴリで絞り込み</h2>
       <div id="category-option-list"></div>
       <button class="modal-close" id="category-modal-close">閉じる</button>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-bg hidden" id="delete-confirm-modal-bg">
+    <div class="modal">
+      <h2 id="delete-confirm-title">🗑️ 確認</h2>
+      <p id="delete-confirm-message" style="font-size:14px;text-align:center;padding:6px 0 16px;">このメモを削除しますか？</p>
+      <div class="io-row">
+        <button class="modal-btn import" id="delete-confirm-no">いいえ</button>
+        <button class="modal-btn export" id="delete-confirm-yes" style="background:var(--danger);color:#fff;">はい</button>
+      </div>
     </div>
   </div>
 
@@ -318,54 +511,1372 @@
 <script>
 "use strict";
 const STORAGE_KEY  = "memo-pwa-notes";
+const STORAGE_BACKUP_KEY = "memo-pwa-notes-backup"; // 直前に正常保存できた世代のバックアップ
 const SETTINGS_KEY = "memo-pwa-settings";
+
+// ── i18n ──────────────────────────────────────────────────
+let currentLang = "ja"; // "ja" | "en" | "es" | "pt" | "ko" | "id" | "zh" | "th" | "vi" | "de" | "hi" | "fr"
+const I18N = {
+  ja: {
+    appTitle: "📝 メモ帳",
+    appTabTitle: "メモ帳",
+    sortBtn: "並替",
+    doneBtn: "完了",
+    searchBtn: "検索",
+    categoryBtn: "カテゴリ",
+    newBtn: "＋ 新規",
+    searchPlaceholder: "検索…",
+    searchingPrefix: "🔍 検索：",
+    categoryFilterPrefix: "📁 カテゴリ：",
+    categoryFilterClear: "✕ 解除",
+    sortBarLabel: "並び順：",
+    sortManual: "手動",
+    sortDateDesc: "日時↓",
+    sortDateAsc: "日時↑",
+    sortTitleDesc: "題名↓",
+    sortTitleAsc: "題名↑",
+    sortCategoryDesc: "カテゴリ↓",
+    sortCategoryAsc: "カテゴリ↑",
+    longpressHint: "≡ ドラッグで並べ替え／「完了」で終了",
+    emptyFiltered: "一致するメモがありません",
+    emptyAll: "メモがありません。＋で作成できます。",
+    backBtn: "← 一覧",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌固定中",
+    saveBtn: "💾 保存",
+    savedBtn: "✅ 保存済",
+    deleteBtn: "削除",
+    titlePlaceholder: "題名を入力",
+    titleLabel: "題名",
+    categoryPlaceholder: "カテゴリを入力",
+    categoryLabel: "カテゴリ",
+    bodyPlaceholder: "本文を入力…",
+    editorSettingsTitle: "⚙️ 設定",
+    fontSizeLabel: "文字サイズ",
+    lineHeightLabel: "行間",
+    editorOverrideBadge: "このメモだけの設定",
+    editorOverrideResetBtn: "既定値に戻す",
+    applyGlobalDefaultBtn: "この値を全メモの既定値にする",
+    confirmApplyGlobalDefault: "全メモの既定値にしますか？",
+    appliedGlobalDefault: "✅ 既定値を更新しました",
+    closeBtn: "閉じる",
+    settingsTitle: "⚙️ 設定",
+    themeSettingLabel: "テーマ",
+    themeLightBtn: "ライトモード",
+    themeDarkBtn: "ダークモード",
+    themeSystemBtn: "端末に合わせる",
+    selfName: "日本語",
+    listFontSizeLabel: "一覧の文字サイズ",
+    listLineHeightLabel: "一覧の行間",
+    showDateLabel: "一覧に日時を表示",
+    lockHideLabel: "🔒メモを非表示",
+    exportLabel: "書き出し",
+    importLabel: "取り込み",
+    exportMemBtn: "引き継ぎデータを書き出し(.mem) ［推奨］",
+    exportMemDesc: "作成・更新日時やカテゴリも復元できます",
+    exportTxtBtn: "テキストとして書き出し(.txt)",
+    exportTxtDesc: "本文を他アプリでも読める形式で保存",
+    importMemBtn: "引き継ぎデータを取り込み(.mem)",
+    keepImportBtn: "Google Keepデータを取り込み(.zip)",
+    categoryModalTitle: "📁 カテゴリで絞り込み",
+    categoryAll: "すべて",
+    categoryNone: "カテゴリなし",
+    lastUpdated: "更新日時：",
+    createdLabel: "作成日時：",
+    dateFieldSettingLabel: "表示する日時",
+    dateFieldCreatedBtn: "作成日時",
+    dateFieldUpdatedBtn: "更新日時",
+    untitledNote: "(空白メモ)",
+    confirmDeleteNote: "このメモを削除しますか？",
+    confirmExitApp: "メモ帳アプリを終了しますか？",
+    charCountLabel: "文字数を表示",
+    charCountPrefix: "文字数：",
+    confirmTitle: "確認",
+    yesBtn: "はい",
+    noBtn: "いいえ",
+    importedCount: n => n + "件を取り込みました。",
+    csvLoadFail: msg => "CSVの読み込みに失敗しました：" + msg,
+    jsonLoadFail: msg => "JSONの読み込みに失敗しました：" + msg,
+    htmlLoadFail: msg => "HTMLの読み込みに失敗しました：" + msg,
+    memLoadFail: msg => "引き継ぎデータの読み込みに失敗しました：" + msg,
+    noArticleFound: "<article> 要素が見つかりません",
+    jsonNotArray: "配列形式のJSONではありません",
+    exportFail: msg => "書き出しに失敗しました：" + msg,
+    exportSuccessShare: fn => "✅「" + fn + "」を書き出しました",
+    exportSuccessDownload: fn => "✅「" + fn + "」をダウンロードフォルダに保存しました",
+    deleteAriaLabel: "削除",
+    htmlExportTitle: "メモ一覧",
+    htmlExportH1: "メモ一覧",
+    dtLocale: "ja-JP"
+  },
+  en: {
+    appTitle: "📝 Notes",
+    appTabTitle: "Notes",
+    sortBtn: "Sort",
+    doneBtn: "Done",
+    searchBtn: "Search",
+    categoryBtn: "Category",
+    newBtn: "+ New",
+    searchPlaceholder: "Search…",
+    searchingPrefix: "🔍 Search: ",
+    categoryFilterPrefix: "📁 Category: ",
+    categoryFilterClear: "✕ Clear",
+    sortBarLabel: "Sort:",
+    sortManual: "Manual",
+    sortDateDesc: "Date↓",
+    sortDateAsc: "Date↑",
+    sortTitleDesc: "Title↓",
+    sortTitleAsc: "Title↑",
+    sortCategoryDesc: "Category↓",
+    sortCategoryAsc: "Category↑",
+    longpressHint: "≡ Drag to reorder, tap Done to finish",
+    emptyFiltered: "No matching notes",
+    emptyAll: "No notes yet. Tap + to add one.",
+    backBtn: "← Notes",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Pinned",
+    saveBtn: "💾 Save",
+    savedBtn: "✅ Saved",
+    deleteBtn: "Delete",
+    titlePlaceholder: "Title",
+    titleLabel: "Title",
+    categoryPlaceholder: "Category",
+    categoryLabel: "Category",
+    bodyPlaceholder: "Start typing…",
+    editorSettingsTitle: "⚙️ Settings",
+    fontSizeLabel: "Font Size",
+    lineHeightLabel: "Line Spacing",
+    editorOverrideBadge: "Custom for this note",
+    editorOverrideResetBtn: "Reset to Default",
+    applyGlobalDefaultBtn: "Use as Default for All Notes",
+    confirmApplyGlobalDefault: "Set as default for all notes?",
+    appliedGlobalDefault: "✅ Default updated",
+    closeBtn: "Close",
+    settingsTitle: "⚙️ Settings",
+    themeSettingLabel: "Theme",
+    themeLightBtn: "Light mode",
+    themeDarkBtn: "Dark mode",
+    themeSystemBtn: "Match device",
+    selfName: "English",
+    listFontSizeLabel: "List Font Size",
+    listLineHeightLabel: "List Line Spacing",
+    showDateLabel: "Show Date in List",
+    lockHideLabel: "🔒 Hide Locked Notes",
+    exportLabel: "Export",
+    importLabel: "Import",
+    exportMemBtn: "Backup file (.mem) [Recommended]",
+    exportMemDesc: "Keeps dates and categories intact",
+    exportTxtBtn: "Export as plain text (.txt)",
+    exportTxtDesc: "Saves note text in a format other apps can read",
+    importMemBtn: "Import backup (.mem)",
+    keepImportBtn: "Import from Google Keep (.zip)",
+    categoryModalTitle: "📁 Filter by Category",
+    categoryAll: "All",
+    categoryNone: "Uncategorized",
+    lastUpdated: "Updated: ",
+    createdLabel: "Created: ",
+    dateFieldSettingLabel: "List Date",
+    dateFieldCreatedBtn: "Created",
+    dateFieldUpdatedBtn: "Updated",
+    untitledNote: "(Untitled note)",
+    confirmDeleteNote: "Delete this note?",
+    confirmExitApp: "Exit Notes?",
+    charCountLabel: "Show Character Count",
+    charCountPrefix: "Characters: ",
+    confirmTitle: "Confirm",
+    yesBtn: "Yes",
+    noBtn: "No",
+    importedCount: n => n + " note(s) imported.",
+    csvLoadFail: msg => "Couldn't load CSV: " + msg,
+    jsonLoadFail: msg => "Couldn't load JSON: " + msg,
+    htmlLoadFail: msg => "Couldn't load HTML: " + msg,
+    memLoadFail: msg => "Couldn't load backup file: " + msg,
+    noArticleFound: "No <article> elements found",
+    jsonNotArray: "JSON is not an array",
+    exportFail: msg => "Export failed: " + msg,
+    exportSuccessShare: fn => "✅ Exported \"" + fn + "\"",
+    exportSuccessDownload: fn => "✅ Saved \"" + fn + "\" to Downloads",
+    deleteAriaLabel: "Delete",
+    htmlExportTitle: "Notes",
+    htmlExportH1: "Notes",
+    dtLocale: "en-US"
+  },
+  es: {
+    appTitle: "📝 Notas",
+    appTabTitle: "Notas",
+    sortBtn: "Orden",
+    doneBtn: "Listo",
+    searchBtn: "Buscar",
+    categoryBtn: "Categoría",
+    newBtn: "+ Nueva",
+    searchPlaceholder: "Buscar…",
+    searchingPrefix: "🔍 Buscar: ",
+    categoryFilterPrefix: "📁 Categoría: ",
+    categoryFilterClear: "✕ Quitar",
+    sortBarLabel: "Orden:",
+    sortManual: "Manual",
+    sortDateDesc: "Fecha↓",
+    sortDateAsc: "Fecha↑",
+    sortTitleDesc: "Título↓",
+    sortTitleAsc: "Título↑",
+    sortCategoryDesc: "Categoría↓",
+    sortCategoryAsc: "Categoría↑",
+    longpressHint: "≡ Arrastra para reordenar, toca Listo",
+    emptyFiltered: "Sin notas coincidentes",
+    emptyAll: "Aún no hay notas. Toca + para crear una.",
+    backBtn: "← Notas",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Fijada",
+    saveBtn: "💾 Guardar",
+    savedBtn: "✅ Guardado",
+    deleteBtn: "Eliminar",
+    titlePlaceholder: "Título",
+    titleLabel: "Título",
+    categoryPlaceholder: "Categoría",
+    categoryLabel: "Categoría",
+    bodyPlaceholder: "Empieza a escribir…",
+    editorSettingsTitle: "⚙️ Ajustes",
+    fontSizeLabel: "Tamaño de letra",
+    lineHeightLabel: "Interlineado",
+    editorOverrideBadge: "Ajuste propio de esta nota",
+    editorOverrideResetBtn: "Restablecer",
+    applyGlobalDefaultBtn: "Usar como predeterminado en todas",
+    confirmApplyGlobalDefault: "¿Aplicar a todas las notas?",
+    appliedGlobalDefault: "✅ Valor predeterminado actualizado",
+    closeBtn: "Cerrar",
+    settingsTitle: "⚙️ Ajustes",
+    themeSettingLabel: "Tema",
+    themeLightBtn: "Modo claro",
+    themeDarkBtn: "Modo oscuro",
+    themeSystemBtn: "Igual que el dispositivo",
+    selfName: "Español",
+    listFontSizeLabel: "Tamaño de letra (lista)",
+    listLineHeightLabel: "Interlineado (lista)",
+    showDateLabel: "Mostrar fecha en la lista",
+    lockHideLabel: "🔒 Ocultar notas bloqueadas",
+    exportLabel: "Exportar",
+    importLabel: "Importar",
+    exportMemBtn: "Copia de seguridad (.mem) [Recomendado]",
+    exportMemDesc: "Conserva fechas y categorías",
+    exportTxtBtn: "Exportar como texto plano (.txt)",
+    exportTxtDesc: "Guarda el texto en un formato legible por otras apps",
+    importMemBtn: "Importar copia (.mem)",
+    keepImportBtn: "Importar desde Google Keep (.zip)",
+    categoryModalTitle: "📁 Filtrar por categoría",
+    categoryAll: "Todas",
+    categoryNone: "Sin categoría",
+    lastUpdated: "Actualizado: ",
+    createdLabel: "Creado: ",
+    dateFieldSettingLabel: "Fecha en la lista",
+    dateFieldCreatedBtn: "Creación",
+    dateFieldUpdatedBtn: "Actualización",
+    untitledNote: "(Nota sin título)",
+    confirmDeleteNote: "¿Eliminar esta nota?",
+    confirmExitApp: "¿Salir de Notas?",
+    charCountLabel: "Mostrar recuento de caracteres",
+    charCountPrefix: "Caracteres: ",
+    confirmTitle: "Confirmar",
+    yesBtn: "Sí",
+    noBtn: "No",
+    importedCount: n => n + " nota(s) importada(s).",
+    csvLoadFail: msg => "No se pudo cargar el CSV: " + msg,
+    jsonLoadFail: msg => "No se pudo cargar el JSON: " + msg,
+    htmlLoadFail: msg => "No se pudo cargar el HTML: " + msg,
+    memLoadFail: msg => "No se pudo cargar la copia de seguridad: " + msg,
+    noArticleFound: "No se encontraron elementos <article>",
+    jsonNotArray: "El JSON no es un array",
+    exportFail: msg => "Error al exportar: " + msg,
+    exportSuccessShare: fn => "✅ \"" + fn + "\" exportado",
+    exportSuccessDownload: fn => "✅ \"" + fn + "\" guardado en Descargas",
+    deleteAriaLabel: "Eliminar",
+    htmlExportTitle: "Notas",
+    htmlExportH1: "Notas",
+    dtLocale: "es-ES"
+  },
+  pt: {
+    appTitle: "📝 Notas",
+    appTabTitle: "Notas",
+    sortBtn: "Ordem",
+    doneBtn: "Pronto",
+    searchBtn: "Buscar",
+    categoryBtn: "Categoria",
+    newBtn: "+ Nova",
+    searchPlaceholder: "Buscar…",
+    searchingPrefix: "🔍 Buscar: ",
+    categoryFilterPrefix: "📁 Categoria: ",
+    categoryFilterClear: "✕ Remover",
+    sortBarLabel: "Ordem:",
+    sortManual: "Manual",
+    sortDateDesc: "Data↓",
+    sortDateAsc: "Data↑",
+    sortTitleDesc: "Título↓",
+    sortTitleAsc: "Título↑",
+    sortCategoryDesc: "Categoria↓",
+    sortCategoryAsc: "Categoria↑",
+    longpressHint: "≡ Arraste para reordenar, toque em Pronto",
+    emptyFiltered: "Nenhuma nota encontrada",
+    emptyAll: "Nenhuma nota ainda. Toque em + para criar.",
+    backBtn: "← Notas",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Fixada",
+    saveBtn: "💾 Salvar",
+    savedBtn: "✅ Salvo",
+    deleteBtn: "Excluir",
+    titlePlaceholder: "Título",
+    titleLabel: "Título",
+    categoryPlaceholder: "Categoria",
+    categoryLabel: "Categoria",
+    bodyPlaceholder: "Comece a escrever…",
+    editorSettingsTitle: "⚙️ Configurações",
+    fontSizeLabel: "Tamanho da fonte",
+    lineHeightLabel: "Espaçamento",
+    editorOverrideBadge: "Ajuste próprio desta nota",
+    editorOverrideResetBtn: "Restaurar padrão",
+    applyGlobalDefaultBtn: "Usar como padrão em todas as notas",
+    confirmApplyGlobalDefault: "Aplicar a todas as notas?",
+    appliedGlobalDefault: "✅ Padrão atualizado",
+    closeBtn: "Fechar",
+    settingsTitle: "⚙️ Configurações",
+    themeSettingLabel: "Tema",
+    themeLightBtn: "Modo claro",
+    themeDarkBtn: "Modo escuro",
+    themeSystemBtn: "Igual ao dispositivo",
+    selfName: "Português",
+    listFontSizeLabel: "Tamanho da fonte (lista)",
+    listLineHeightLabel: "Espaçamento (lista)",
+    showDateLabel: "Mostrar data na lista",
+    lockHideLabel: "🔒 Ocultar notas bloqueadas",
+    exportLabel: "Exportar",
+    importLabel: "Importar",
+    exportMemBtn: "Backup de dados (.mem) [Recomendado]",
+    exportMemDesc: "Mantém datas e categorias intactas",
+    exportTxtBtn: "Exportar como texto simples (.txt)",
+    exportTxtDesc: "Salva o texto em um formato legível por outros apps",
+    importMemBtn: "Importar backup (.mem)",
+    keepImportBtn: "Importar do Google Keep (.zip)",
+    categoryModalTitle: "📁 Filtrar por categoria",
+    categoryAll: "Todas",
+    categoryNone: "Sem categoria",
+    lastUpdated: "Atualizado: ",
+    createdLabel: "Criado: ",
+    dateFieldSettingLabel: "Data na lista",
+    dateFieldCreatedBtn: "Criação",
+    dateFieldUpdatedBtn: "Atualização",
+    untitledNote: "(Nota sem título)",
+    confirmDeleteNote: "Excluir esta nota?",
+    confirmExitApp: "Sair do Notas?",
+    charCountLabel: "Mostrar contagem de caracteres",
+    charCountPrefix: "Caracteres: ",
+    confirmTitle: "Confirmar",
+    yesBtn: "Sim",
+    noBtn: "Não",
+    importedCount: n => n + " nota(s) importada(s).",
+    csvLoadFail: msg => "Falha ao carregar o CSV: " + msg,
+    jsonLoadFail: msg => "Falha ao carregar o JSON: " + msg,
+    htmlLoadFail: msg => "Falha ao carregar o HTML: " + msg,
+    memLoadFail: msg => "Falha ao carregar o backup: " + msg,
+    noArticleFound: "Nenhum elemento <article> encontrado",
+    jsonNotArray: "O JSON não é um array",
+    exportFail: msg => "Falha ao exportar: " + msg,
+    exportSuccessShare: fn => "✅ \"" + fn + "\" exportado",
+    exportSuccessDownload: fn => "✅ \"" + fn + "\" salvo em Downloads",
+    deleteAriaLabel: "Excluir",
+    htmlExportTitle: "Notas",
+    htmlExportH1: "Notas",
+    dtLocale: "pt-BR"
+  },
+  ko: {
+    appTitle: "📝 메모",
+    appTabTitle: "메모",
+    sortBtn: "정렬",
+    doneBtn: "완료",
+    searchBtn: "검색",
+    categoryBtn: "카테고리",
+    newBtn: "+ 새 메모",
+    searchPlaceholder: "검색…",
+    searchingPrefix: "🔍 검색: ",
+    categoryFilterPrefix: "📁 카테고리: ",
+    categoryFilterClear: "✕ 해제",
+    sortBarLabel: "정렬:",
+    sortManual: "수동",
+    sortDateDesc: "날짜↓",
+    sortDateAsc: "날짜↑",
+    sortTitleDesc: "제목↓",
+    sortTitleAsc: "제목↑",
+    sortCategoryDesc: "카테고리↓",
+    sortCategoryAsc: "카테고리↑",
+    longpressHint: "≡ 드래그해 순서 변경, “완료”로 종료",
+    emptyFiltered: "일치하는 메모 없음",
+    emptyAll: "메모가 없어요. +를 눌러 만들어보세요.",
+    backBtn: "← 목록",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 고정됨",
+    saveBtn: "💾 저장",
+    savedBtn: "✅ 저장됨",
+    deleteBtn: "삭제",
+    titlePlaceholder: "제목",
+    titleLabel: "제목",
+    categoryPlaceholder: "카테고리",
+    categoryLabel: "카테고리",
+    bodyPlaceholder: "내용을 입력하세요…",
+    editorSettingsTitle: "⚙️ 설정",
+    fontSizeLabel: "글자 크기",
+    lineHeightLabel: "줄 간격",
+    editorOverrideBadge: "이 메모만 다른 설정 사용 중",
+    editorOverrideResetBtn: "기본값으로",
+    applyGlobalDefaultBtn: "모든 메모의 기본값으로 저장",
+    confirmApplyGlobalDefault: "모든 메모에 적용할까요?",
+    appliedGlobalDefault: "✅ 기본값을 변경했어요",
+    closeBtn: "닫기",
+    settingsTitle: "⚙️ 설정",
+    themeSettingLabel: "테마",
+    themeLightBtn: "라이트 모드",
+    themeDarkBtn: "다크 모드",
+    themeSystemBtn: "기기 설정 따르기",
+    selfName: "한국어",
+    listFontSizeLabel: "목록 글자 크기",
+    listLineHeightLabel: "목록 줄 간격",
+    showDateLabel: "목록에 날짜 표시",
+    lockHideLabel: "🔒 잠긴 메모 숨기기",
+    exportLabel: "내보내기",
+    importLabel: "가져오기",
+    exportMemBtn: "백업 파일 내보내기(.mem) [권장]",
+    exportMemDesc: "생성・수정 날짜와 카테고리까지 그대로 복원",
+    exportTxtBtn: "일반 텍스트로 내보내기(.txt)",
+    exportTxtDesc: "다른 앱에서도 읽을 수 있는 형식으로 저장",
+    importMemBtn: "백업 파일 가져오기(.mem)",
+    keepImportBtn: "Google Keep 데이터 가져오기(.zip)",
+    categoryModalTitle: "📁 카테고리로 필터링",
+    categoryAll: "전체",
+    categoryNone: "미분류",
+    lastUpdated: "수정: ",
+    createdLabel: "생성: ",
+    dateFieldSettingLabel: "목록에 표시할 날짜",
+    dateFieldCreatedBtn: "생성일",
+    dateFieldUpdatedBtn: "수정일",
+    untitledNote: "(제목 없음)",
+    confirmDeleteNote: "이 메모를 삭제할까요?",
+    confirmExitApp: "메모 앱을 종료할까요?",
+    charCountLabel: "글자 수 표시",
+    charCountPrefix: "글자 수: ",
+    confirmTitle: "확인",
+    yesBtn: "예",
+    noBtn: "아니요",
+    importedCount: n => n + "개 메모를 가져왔어요.",
+    csvLoadFail: msg => "CSV를 불러오지 못했어요: " + msg,
+    jsonLoadFail: msg => "JSON을 불러오지 못했어요: " + msg,
+    htmlLoadFail: msg => "HTML을 불러오지 못했어요: " + msg,
+    memLoadFail: msg => "백업 파일을 불러오지 못했어요: " + msg,
+    noArticleFound: "<article> 요소를 찾을 수 없어요",
+    jsonNotArray: "JSON이 배열 형식이 아니에요",
+    exportFail: msg => "내보내기에 실패했어요: " + msg,
+    exportSuccessShare: fn => "✅ \"" + fn + "\" 내보내기 완료",
+    exportSuccessDownload: fn => "✅ \"" + fn + "\"을(를) 다운로드 폴더에 저장했어요",
+    deleteAriaLabel: "삭제",
+    htmlExportTitle: "메모 목록",
+    htmlExportH1: "메모 목록",
+    dtLocale: "ko-KR"
+  },
+  id: {
+    appTitle: "📝 Catatan",
+    appTabTitle: "Catatan",
+    sortBtn: "Urutkan",
+    doneBtn: "Selesai",
+    searchBtn: "Cari",
+    categoryBtn: "Kategori",
+    newBtn: "+ Baru",
+    searchPlaceholder: "Cari…",
+    searchingPrefix: "🔍 Cari: ",
+    categoryFilterPrefix: "📁 Kategori: ",
+    categoryFilterClear: "✕ Hapus",
+    sortBarLabel: "Urutan:",
+    sortManual: "Manual",
+    sortDateDesc: "Tanggal↓",
+    sortDateAsc: "Tanggal↑",
+    sortTitleDesc: "Judul↓",
+    sortTitleAsc: "Judul↑",
+    sortCategoryDesc: "Kategori↓",
+    sortCategoryAsc: "Kategori↑",
+    longpressHint: "≡ Seret untuk mengurutkan, ketuk Selesai",
+    emptyFiltered: "Tidak ada catatan yang cocok",
+    emptyAll: "Belum ada catatan. Ketuk + untuk membuat.",
+    backBtn: "← Catatan",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Disematkan",
+    saveBtn: "💾 Simpan",
+    savedBtn: "✅ Tersimpan",
+    deleteBtn: "Hapus",
+    titlePlaceholder: "Judul",
+    titleLabel: "Judul",
+    categoryPlaceholder: "Kategori",
+    categoryLabel: "Kategori",
+    bodyPlaceholder: "Mulai menulis…",
+    editorSettingsTitle: "⚙️ Pengaturan",
+    fontSizeLabel: "Ukuran Font",
+    lineHeightLabel: "Jarak Baris",
+    editorOverrideBadge: "Pengaturan khusus catatan ini",
+    editorOverrideResetBtn: "Kembalikan ke Default",
+    applyGlobalDefaultBtn: "Jadikan Default untuk Semua Catatan",
+    confirmApplyGlobalDefault: "Terapkan ke semua catatan?",
+    appliedGlobalDefault: "✅ Default diperbarui",
+    closeBtn: "Tutup",
+    settingsTitle: "⚙️ Pengaturan",
+    themeSettingLabel: "Tema",
+    themeLightBtn: "Mode terang",
+    themeDarkBtn: "Mode gelap",
+    themeSystemBtn: "Ikuti perangkat",
+    selfName: "Bahasa Indonesia",
+    listFontSizeLabel: "Ukuran Font Daftar",
+    listLineHeightLabel: "Jarak Baris Daftar",
+    showDateLabel: "Tampilkan Tanggal di Daftar",
+    lockHideLabel: "🔒 Sembunyikan Catatan Terkunci",
+    exportLabel: "Ekspor",
+    importLabel: "Impor",
+    exportMemBtn: "Berkas cadangan (.mem) [Disarankan]",
+    exportMemDesc: "Tanggal dan kategori tetap utuh",
+    exportTxtBtn: "Ekspor sebagai teks biasa (.txt)",
+    exportTxtDesc: "Simpan isi catatan dalam format yang bisa dibaca aplikasi lain",
+    importMemBtn: "Impor cadangan (.mem)",
+    keepImportBtn: "Impor data Google Keep (.zip)",
+    categoryModalTitle: "📁 Saring berdasarkan Kategori",
+    categoryAll: "Semua",
+    categoryNone: "Tanpa kategori",
+    lastUpdated: "Diperbarui: ",
+    createdLabel: "Dibuat: ",
+    dateFieldSettingLabel: "Tanggal di Daftar",
+    dateFieldCreatedBtn: "Dibuat",
+    dateFieldUpdatedBtn: "Diperbarui",
+    untitledNote: "(Catatan tanpa judul)",
+    confirmDeleteNote: "Hapus catatan ini?",
+    confirmExitApp: "Keluar dari Catatan?",
+    charCountLabel: "Tampilkan Jumlah Karakter",
+    charCountPrefix: "Jumlah Karakter: ",
+    confirmTitle: "Konfirmasi",
+    yesBtn: "Ya",
+    noBtn: "Tidak",
+    importedCount: n => n + " catatan diimpor.",
+    csvLoadFail: msg => "Gagal memuat CSV: " + msg,
+    jsonLoadFail: msg => "Gagal memuat JSON: " + msg,
+    htmlLoadFail: msg => "Gagal memuat HTML: " + msg,
+    memLoadFail: msg => "Gagal memuat berkas cadangan: " + msg,
+    noArticleFound: "Elemen <article> tidak ditemukan",
+    jsonNotArray: "JSON bukan format array",
+    exportFail: msg => "Ekspor gagal: " + msg,
+    exportSuccessShare: fn => "✅ \"" + fn + "\" berhasil diekspor",
+    exportSuccessDownload: fn => "✅ \"" + fn + "\" disimpan ke folder Unduhan",
+    deleteAriaLabel: "Hapus",
+    htmlExportTitle: "Catatan",
+    htmlExportH1: "Catatan",
+    dtLocale: "id-ID"
+  },
+  zh: {
+    appTitle: "📝 記事本",
+    appTabTitle: "記事本",
+    sortBtn: "排序",
+    doneBtn: "完成",
+    searchBtn: "搜尋",
+    categoryBtn: "分類",
+    newBtn: "＋ 新增",
+    searchPlaceholder: "搜尋…",
+    searchingPrefix: "🔍 搜尋：",
+    categoryFilterPrefix: "📁 分類：",
+    categoryFilterClear: "✕ 清除",
+    sortBarLabel: "排序：",
+    sortManual: "手動",
+    sortDateDesc: "日期↓",
+    sortDateAsc: "日期↑",
+    sortTitleDesc: "標題↓",
+    sortTitleAsc: "標題↑",
+    sortCategoryDesc: "分類↓",
+    sortCategoryAsc: "分類↑",
+    longpressHint: "≡ 拖曳排序，點「完成」結束",
+    emptyFiltered: "沒有符合的記事",
+    emptyAll: "尚無記事，點「＋」新增一則。",
+    backBtn: "← 記事",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 已釘選",
+    saveBtn: "💾 儲存",
+    savedBtn: "✅ 已儲存",
+    deleteBtn: "刪除",
+    titlePlaceholder: "標題",
+    titleLabel: "標題",
+    categoryPlaceholder: "分類",
+    categoryLabel: "分類",
+    bodyPlaceholder: "開始輸入內容…",
+    editorSettingsTitle: "⚙️ 設定",
+    fontSizeLabel: "字型大小",
+    lineHeightLabel: "行距",
+    editorOverrideBadge: "此記事使用專屬設定",
+    editorOverrideResetBtn: "還原預設值",
+    applyGlobalDefaultBtn: "設為所有記事的預設值",
+    confirmApplyGlobalDefault: "套用到所有記事嗎？",
+    appliedGlobalDefault: "✅ 已更新預設值",
+    closeBtn: "關閉",
+    settingsTitle: "⚙️ 設定",
+    themeSettingLabel: "主題",
+    themeLightBtn: "淺色模式",
+    themeDarkBtn: "深色模式",
+    themeSystemBtn: "跟隨系統",
+    selfName: "繁體中文",
+    listFontSizeLabel: "列表字型大小",
+    listLineHeightLabel: "列表行距",
+    showDateLabel: "在列表顯示日期",
+    lockHideLabel: "🔒 隱藏已鎖定的記事",
+    exportLabel: "匯出",
+    importLabel: "匯入",
+    exportMemBtn: "備份檔案(.mem) ［建議］",
+    exportMemDesc: "完整保留建立、更新時間與分類",
+    exportTxtBtn: "匯出為純文字（.txt）",
+    exportTxtDesc: "以其他應用程式可讀取的格式儲存內容",
+    importMemBtn: "匯入備份（.mem）",
+    keepImportBtn: "匯入 Google Keep 資料（.zip）",
+    categoryModalTitle: "📁 依分類篩選",
+    categoryAll: "全部",
+    categoryNone: "未分類",
+    lastUpdated: "更新：",
+    createdLabel: "建立：",
+    dateFieldSettingLabel: "列表顯示日期",
+    dateFieldCreatedBtn: "建立時間",
+    dateFieldUpdatedBtn: "更新時間",
+    untitledNote: "（空白記事）",
+    confirmDeleteNote: "確定要刪除這則記事嗎？",
+    confirmExitApp: "確定要結束記事本嗎？",
+    charCountLabel: "顯示字數",
+    charCountPrefix: "字數：",
+    confirmTitle: "確認",
+    yesBtn: "是",
+    noBtn: "否",
+    importedCount: n => "已匯入 " + n + " 則記事。",
+    csvLoadFail: msg => "CSV 讀取失敗：" + msg,
+    jsonLoadFail: msg => "JSON 讀取失敗：" + msg,
+    htmlLoadFail: msg => "HTML 讀取失敗：" + msg,
+    memLoadFail: msg => "備份檔案讀取失敗：" + msg,
+    noArticleFound: "找不到 <article> 元素",
+    jsonNotArray: "JSON 不是陣列格式",
+    exportFail: msg => "匯出失敗：" + msg,
+    exportSuccessShare: fn => "✅「" + fn + "」已匯出",
+    exportSuccessDownload: fn => "✅「" + fn + "」已存到下載資料夾",
+    deleteAriaLabel: "刪除",
+    htmlExportTitle: "記事列表",
+    htmlExportH1: "記事列表",
+    dtLocale: "zh-TW"
+  },
+  th: {
+    appTitle: "📝 บันทึก",
+    appTabTitle: "บันทึก",
+    sortBtn: "เรียง",
+    doneBtn: "เสร็จ",
+    searchBtn: "ค้นหา",
+    categoryBtn: "หมวดหมู่",
+    newBtn: "+ ใหม่",
+    searchPlaceholder: "ค้นหา…",
+    searchingPrefix: "🔍 ค้นหา: ",
+    categoryFilterPrefix: "📁 หมวดหมู่: ",
+    categoryFilterClear: "✕ ล้าง",
+    sortBarLabel: "เรียง:",
+    sortManual: "กำหนดเอง",
+    sortDateDesc: "วันที่↓",
+    sortDateAsc: "วันที่↑",
+    sortTitleDesc: "ชื่อ↓",
+    sortTitleAsc: "ชื่อ↑",
+    sortCategoryDesc: "หมวดหมู่↓",
+    sortCategoryAsc: "หมวดหมู่↑",
+    longpressHint: "≡ ลากเพื่อจัดเรียง แตะ “เสร็จ” เพื่อจบ",
+    emptyFiltered: "ไม่พบบันทึกที่ตรงกัน",
+    emptyAll: "ยังไม่มีบันทึก แตะ + เพื่อสร้าง",
+    backBtn: "← บันทึก",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 ปักหมุด",
+    saveBtn: "💾 บันทึก",
+    savedBtn: "✅ บันทึกแล้ว",
+    deleteBtn: "ลบ",
+    titlePlaceholder: "ชื่อเรื่อง",
+    titleLabel: "ชื่อเรื่อง",
+    categoryPlaceholder: "หมวดหมู่",
+    categoryLabel: "หมวดหมู่",
+    bodyPlaceholder: "เริ่มพิมพ์…",
+    editorSettingsTitle: "⚙️ ตั้งค่า",
+    fontSizeLabel: "ขนาดตัวอักษร",
+    lineHeightLabel: "ระยะห่างบรรทัด",
+    editorOverrideBadge: "บันทึกนี้ใช้ค่าเฉพาะ",
+    editorOverrideResetBtn: "คืนค่าเริ่มต้น",
+    applyGlobalDefaultBtn: "ใช้เป็นค่าเริ่มต้นของทุกบันทึก",
+    confirmApplyGlobalDefault: "ใช้กับทุกบันทึกหรือไม่?",
+    appliedGlobalDefault: "✅ อัปเดตค่าเริ่มต้นแล้ว",
+    closeBtn: "ปิด",
+    settingsTitle: "⚙️ ตั้งค่า",
+    themeSettingLabel: "ธีม",
+    themeLightBtn: "โหมดสว่าง",
+    themeDarkBtn: "โหมดมืด",
+    themeSystemBtn: "ตามอุปกรณ์",
+    selfName: "ไทย",
+    listFontSizeLabel: "ขนาดตัวอักษรในรายการ",
+    listLineHeightLabel: "ระยะห่างบรรทัดในรายการ",
+    showDateLabel: "แสดงวันที่ในรายการ",
+    lockHideLabel: "🔒 ซ่อนบันทึกที่ล็อก",
+    exportLabel: "ส่งออก",
+    importLabel: "นำเข้า",
+    exportMemBtn: "ไฟล์สำรองข้อมูล (.mem) [แนะนำ]",
+    exportMemDesc: "เก็บวันที่และหมวดหมู่ไว้ครบถ้วน",
+    exportTxtBtn: "ส่งออกเป็นข้อความล้วน (.txt)",
+    exportTxtDesc: "บันทึกเนื้อหาในรูปแบบที่แอปอื่นอ่านได้",
+    importMemBtn: "นำเข้าไฟล์สำรอง (.mem)",
+    keepImportBtn: "นำเข้าข้อมูล Google Keep (.zip)",
+    categoryModalTitle: "📁 กรองตามหมวดหมู่",
+    categoryAll: "ทั้งหมด",
+    categoryNone: "ไม่มีหมวดหมู่",
+    lastUpdated: "แก้ไข: ",
+    createdLabel: "สร้าง: ",
+    dateFieldSettingLabel: "วันที่ในรายการ",
+    dateFieldCreatedBtn: "วันที่สร้าง",
+    dateFieldUpdatedBtn: "วันที่แก้ไข",
+    untitledNote: "(บันทึกไม่มีชื่อ)",
+    confirmDeleteNote: "ลบบันทึกนี้หรือไม่?",
+    confirmExitApp: "ออกจากแอปหรือไม่?",
+    charCountLabel: "แสดงจำนวนตัวอักษร",
+    charCountPrefix: "ตัวอักษร: ",
+    confirmTitle: "ยืนยัน",
+    yesBtn: "ใช่",
+    noBtn: "ไม่ใช่",
+    importedCount: n => "นำเข้าแล้ว " + n + " รายการ",
+    csvLoadFail: msg => "โหลด CSV ไม่สำเร็จ: " + msg,
+    jsonLoadFail: msg => "โหลด JSON ไม่สำเร็จ: " + msg,
+    htmlLoadFail: msg => "โหลด HTML ไม่สำเร็จ: " + msg,
+    memLoadFail: msg => "โหลดไฟล์สำรองไม่สำเร็จ: " + msg,
+    noArticleFound: "ไม่พบองค์ประกอบ <article>",
+    jsonNotArray: "JSON ไม่ใช่รูปแบบอาร์เรย์",
+    exportFail: msg => "ส่งออกไม่สำเร็จ: " + msg,
+    exportSuccessShare: fn => "✅ ส่งออก \"" + fn + "\" แล้ว",
+    exportSuccessDownload: fn => "✅ บันทึก \"" + fn + "\" ไว้ในโฟลเดอร์ดาวน์โหลดแล้ว",
+    deleteAriaLabel: "ลบ",
+    htmlExportTitle: "รายการบันทึก",
+    htmlExportH1: "รายการบันทึก",
+    dtLocale: "th-TH"
+  },
+  vi: {
+    appTitle: "📝 Ghi chú",
+    appTabTitle: "Ghi chú",
+    sortBtn: "Sắp xếp",
+    doneBtn: "Xong",
+    searchBtn: "Tìm",
+    categoryBtn: "Danh mục",
+    newBtn: "+ Mới",
+    searchPlaceholder: "Tìm…",
+    searchingPrefix: "🔍 Tìm: ",
+    categoryFilterPrefix: "📁 Danh mục: ",
+    categoryFilterClear: "✕ Xóa",
+    sortBarLabel: "Sắp xếp:",
+    sortManual: "Thủ công",
+    sortDateDesc: "Ngày↓",
+    sortDateAsc: "Ngày↑",
+    sortTitleDesc: "Tiêu đề↓",
+    sortTitleAsc: "Tiêu đề↑",
+    sortCategoryDesc: "Danh mục↓",
+    sortCategoryAsc: "Danh mục↑",
+    longpressHint: "≡ Kéo để sắp xếp, chạm Xong để kết thúc",
+    emptyFiltered: "Không có ghi chú phù hợp",
+    emptyAll: "Chưa có ghi chú. Chạm + để tạo.",
+    backBtn: "← Ghi chú",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Đã ghim",
+    saveBtn: "💾 Lưu",
+    savedBtn: "✅ Đã lưu",
+    deleteBtn: "Xóa",
+    titlePlaceholder: "Tiêu đề",
+    titleLabel: "Tiêu đề",
+    categoryPlaceholder: "Danh mục",
+    categoryLabel: "Danh mục",
+    bodyPlaceholder: "Bắt đầu nhập nội dung…",
+    editorSettingsTitle: "⚙️ Cài đặt",
+    fontSizeLabel: "Cỡ chữ",
+    lineHeightLabel: "Giãn dòng",
+    editorOverrideBadge: "Cài đặt riêng cho ghi chú này",
+    editorOverrideResetBtn: "Đặt lại mặc định",
+    applyGlobalDefaultBtn: "Dùng làm mặc định cho mọi ghi chú",
+    confirmApplyGlobalDefault: "Áp dụng cho mọi ghi chú?",
+    appliedGlobalDefault: "✅ Đã cập nhật mặc định",
+    closeBtn: "Đóng",
+    settingsTitle: "⚙️ Cài đặt",
+    themeSettingLabel: "Giao diện",
+    themeLightBtn: "Chế độ sáng",
+    themeDarkBtn: "Chế độ tối",
+    themeSystemBtn: "Theo thiết bị",
+    selfName: "Tiếng Việt",
+    listFontSizeLabel: "Cỡ chữ danh sách",
+    listLineHeightLabel: "Giãn dòng danh sách",
+    showDateLabel: "Hiện ngày trong danh sách",
+    lockHideLabel: "🔒 Ẩn ghi chú đã khóa",
+    exportLabel: "Xuất",
+    importLabel: "Nhập",
+    exportMemBtn: "Tệp sao lưu (.mem) [Khuyên dùng]",
+    exportMemDesc: "Giữ nguyên ngày tạo/cập nhật và danh mục",
+    exportTxtBtn: "Xuất dạng văn bản thường (.txt)",
+    exportTxtDesc: "Lưu nội dung ở định dạng ứng dụng khác đọc được",
+    importMemBtn: "Nhập tệp sao lưu (.mem)",
+    keepImportBtn: "Nhập dữ liệu từ Google Keep (.zip)",
+    categoryModalTitle: "📁 Lọc theo danh mục",
+    categoryAll: "Tất cả",
+    categoryNone: "Chưa phân loại",
+    lastUpdated: "Cập nhật: ",
+    createdLabel: "Tạo: ",
+    dateFieldSettingLabel: "Ngày hiển thị",
+    dateFieldCreatedBtn: "Ngày tạo",
+    dateFieldUpdatedBtn: "Ngày cập nhật",
+    untitledNote: "(Ghi chú không có tiêu đề)",
+    confirmDeleteNote: "Xóa ghi chú này?",
+    confirmExitApp: "Thoát ứng dụng?",
+    charCountLabel: "Hiện số ký tự",
+    charCountPrefix: "Số ký tự: ",
+    confirmTitle: "Xác nhận",
+    yesBtn: "Có",
+    noBtn: "Không",
+    importedCount: n => "Đã nhập " + n + " ghi chú.",
+    csvLoadFail: msg => "Không tải được CSV: " + msg,
+    jsonLoadFail: msg => "Không tải được JSON: " + msg,
+    htmlLoadFail: msg => "Không tải được HTML: " + msg,
+    memLoadFail: msg => "Không tải được tệp sao lưu: " + msg,
+    noArticleFound: "Không tìm thấy phần tử <article>",
+    jsonNotArray: "JSON không ở định dạng mảng",
+    exportFail: msg => "Xuất thất bại: " + msg,
+    exportSuccessShare: fn => "✅ Đã xuất \"" + fn + "\"",
+    exportSuccessDownload: fn => "✅ Đã lưu \"" + fn + "\" vào thư mục Tải xuống",
+    deleteAriaLabel: "Xóa",
+    htmlExportTitle: "Danh sách ghi chú",
+    htmlExportH1: "Danh sách ghi chú",
+    dtLocale: "vi-VN"
+  },
+  de: {
+    appTitle: "📝 Notizen",
+    appTabTitle: "Notizen",
+    sortBtn: "Sortieren",
+    doneBtn: "Fertig",
+    searchBtn: "Suchen",
+    categoryBtn: "Kategorie",
+    newBtn: "+ Neu",
+    searchPlaceholder: "Suchen…",
+    searchingPrefix: "🔍 Suche: ",
+    categoryFilterPrefix: "📁 Kategorie: ",
+    categoryFilterClear: "✕ Entfernen",
+    sortBarLabel: "Sortierung:",
+    sortManual: "Manuell",
+    sortDateDesc: "Datum↓",
+    sortDateAsc: "Datum↑",
+    sortTitleDesc: "Titel↓",
+    sortTitleAsc: "Titel↑",
+    sortCategoryDesc: "Kategorie↓",
+    sortCategoryAsc: "Kategorie↑",
+    longpressHint: "≡ Ziehen zum Sortieren, „Fertig“ zum Beenden",
+    emptyFiltered: "Keine passenden Notizen",
+    emptyAll: "Noch keine Notizen. Mit + eine erstellen.",
+    backBtn: "← Notizen",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Angeheftet",
+    saveBtn: "💾 Speichern",
+    savedBtn: "✅ Gespeichert",
+    deleteBtn: "Löschen",
+    titlePlaceholder: "Titel",
+    titleLabel: "Titel",
+    categoryPlaceholder: "Kategorie",
+    categoryLabel: "Kategorie",
+    bodyPlaceholder: "Text eingeben…",
+    editorSettingsTitle: "⚙️ Einstellungen",
+    fontSizeLabel: "Schriftgröße",
+    lineHeightLabel: "Zeilenabstand",
+    editorOverrideBadge: "Eigene Werte für diese Notiz",
+    editorOverrideResetBtn: "Auf Standard zurücksetzen",
+    applyGlobalDefaultBtn: "Als Standard für alle Notizen",
+    confirmApplyGlobalDefault: "Für alle Notizen übernehmen?",
+    appliedGlobalDefault: "✅ Standard aktualisiert",
+    closeBtn: "Schließen",
+    settingsTitle: "⚙️ Einstellungen",
+    themeSettingLabel: "Design",
+    themeLightBtn: "Heller Modus",
+    themeDarkBtn: "Dunkler Modus",
+    themeSystemBtn: "Systemeinstellung",
+    selfName: "Deutsch",
+    listFontSizeLabel: "Schriftgröße (Liste)",
+    listLineHeightLabel: "Zeilenabstand (Liste)",
+    showDateLabel: "Datum in Liste anzeigen",
+    lockHideLabel: "🔒 Gesperrte Notizen ausblenden",
+    exportLabel: "Exportieren",
+    importLabel: "Importieren",
+    exportMemBtn: "Sicherungsdatei (.mem) [Empfohlen]",
+    exportMemDesc: "Erhält Datum und Kategorie vollständig",
+    exportTxtBtn: "Als reinen Text exportieren (.txt)",
+    exportTxtDesc: "Speichert den Text in einem Format, das andere Apps lesen können",
+    importMemBtn: "Sicherung importieren (.mem)",
+    keepImportBtn: "Google Keep-Daten importieren (.zip)",
+    categoryModalTitle: "📁 Nach Kategorie filtern",
+    categoryAll: "Alle",
+    categoryNone: "Ohne Kategorie",
+    lastUpdated: "Aktualisiert: ",
+    createdLabel: "Erstellt: ",
+    dateFieldSettingLabel: "Datum in Liste",
+    dateFieldCreatedBtn: "Erstellt",
+    dateFieldUpdatedBtn: "Aktualisiert",
+    untitledNote: "(Notiz ohne Titel)",
+    confirmDeleteNote: "Diese Notiz löschen?",
+    confirmExitApp: "App beenden?",
+    charCountLabel: "Zeichenanzahl anzeigen",
+    charCountPrefix: "Zeichen: ",
+    confirmTitle: "Bestätigen",
+    yesBtn: "Ja",
+    noBtn: "Nein",
+    importedCount: n => n + " Notiz(en) importiert.",
+    csvLoadFail: msg => "CSV konnte nicht geladen werden: " + msg,
+    jsonLoadFail: msg => "JSON konnte nicht geladen werden: " + msg,
+    htmlLoadFail: msg => "HTML konnte nicht geladen werden: " + msg,
+    memLoadFail: msg => "Sicherungsdatei konnte nicht geladen werden: " + msg,
+    noArticleFound: "Keine <article>-Elemente gefunden",
+    jsonNotArray: "JSON ist kein Array",
+    exportFail: msg => "Export fehlgeschlagen: " + msg,
+    exportSuccessShare: fn => "✅ „" + fn + "“ exportiert",
+    exportSuccessDownload: fn => "✅ „" + fn + "“ in Downloads gespeichert",
+    deleteAriaLabel: "Löschen",
+    htmlExportTitle: "Notizen",
+    htmlExportH1: "Notizen",
+    dtLocale: "de-DE"
+  },
+  hi: {
+    appTitle: "📝 नोट्स",
+    appTabTitle: "नोट्स",
+    sortBtn: "क्रम",
+    doneBtn: "पूर्ण",
+    searchBtn: "खोजें",
+    categoryBtn: "श्रेणी",
+    newBtn: "+ नया",
+    searchPlaceholder: "खोजें…",
+    searchingPrefix: "🔍 खोज: ",
+    categoryFilterPrefix: "📁 श्रेणी: ",
+    categoryFilterClear: "✕ हटाएं",
+    sortBarLabel: "क्रम:",
+    sortManual: "मैन्युअल",
+    sortDateDesc: "तारीख↓",
+    sortDateAsc: "तारीख↑",
+    sortTitleDesc: "शीर्षक↓",
+    sortTitleAsc: "शीर्षक↑",
+    sortCategoryDesc: "श्रेणी↓",
+    sortCategoryAsc: "श्रेणी↑",
+    longpressHint: "≡ खींचकर क्रम बदलें, “पूर्ण” दबाएं",
+    emptyFiltered: "कोई मेल खाता नोट नहीं",
+    emptyAll: "अभी कोई नोट नहीं है। + दबाकर बनाएं।",
+    backBtn: "← नोट्स",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 पिन किया गया",
+    saveBtn: "💾 सहेजें",
+    savedBtn: "✅ सहेजा गया",
+    deleteBtn: "हटाएं",
+    titlePlaceholder: "शीर्षक",
+    titleLabel: "शीर्षक",
+    categoryPlaceholder: "श्रेणी",
+    categoryLabel: "श्रेणी",
+    bodyPlaceholder: "यहां लिखना शुरू करें…",
+    editorSettingsTitle: "⚙️ सेटिंग्स",
+    fontSizeLabel: "फ़ॉन्ट आकार",
+    lineHeightLabel: "लाइन स्पेसिंग",
+    editorOverrideBadge: "इस नोट के लिए अलग सेटिंग",
+    editorOverrideResetBtn: "डिफ़ॉल्ट पर लौटाएं",
+    applyGlobalDefaultBtn: "सभी नोट्स के लिए डिफ़ॉल्ट बनाएं",
+    confirmApplyGlobalDefault: "सभी नोट्स पर लागू करें?",
+    appliedGlobalDefault: "✅ डिफ़ॉल्ट अपडेट हो गया",
+    closeBtn: "बंद करें",
+    settingsTitle: "⚙️ सेटिंग्स",
+    themeSettingLabel: "थीम",
+    themeLightBtn: "लाइट मोड",
+    themeDarkBtn: "डार्क मोड",
+    themeSystemBtn: "डिवाइस के अनुसार",
+    selfName: "हिन्दी",
+    listFontSizeLabel: "सूची का फ़ॉन्ट आकार",
+    listLineHeightLabel: "सूची की लाइन स्पेसिंग",
+    showDateLabel: "सूची में तारीख दिखाएं",
+    lockHideLabel: "🔒 लॉक नोट्स छिपाएं",
+    exportLabel: "निर्यात",
+    importLabel: "आयात",
+    exportMemBtn: "बैकअप फ़ाइल (.mem) [अनुशंसित]",
+    exportMemDesc: "तारीख और श्रेणी पूरी तरह सुरक्षित रहती है",
+    exportTxtBtn: "सामान्य टेक्स्ट के रूप में निर्यात करें (.txt)",
+    exportTxtDesc: "अन्य ऐप्स में पढ़े जा सकने वाले प्रारूप में सहेजें",
+    importMemBtn: "बैकअप आयात करें (.mem)",
+    keepImportBtn: "Google Keep डेटा आयात करें (.zip)",
+    categoryModalTitle: "📁 श्रेणी अनुसार फ़िल्टर करें",
+    categoryAll: "सभी",
+    categoryNone: "बिना श्रेणी",
+    lastUpdated: "अपडेट: ",
+    createdLabel: "बनाया: ",
+    dateFieldSettingLabel: "सूची में तारीख",
+    dateFieldCreatedBtn: "निर्माण तिथि",
+    dateFieldUpdatedBtn: "अपडेट तिथि",
+    untitledNote: "(शीर्षक रहित नोट)",
+    confirmDeleteNote: "इस नोट को हटाएं?",
+    confirmExitApp: "ऐप बंद करें?",
+    charCountLabel: "वर्ण गणना दिखाएं",
+    charCountPrefix: "वर्ण संख्या: ",
+    confirmTitle: "पुष्टि करें",
+    yesBtn: "हाँ",
+    noBtn: "नहीं",
+    importedCount: n => n + " नोट आयात किए गए।",
+    csvLoadFail: msg => "CSV लोड नहीं हो सका: " + msg,
+    jsonLoadFail: msg => "JSON लोड नहीं हो सका: " + msg,
+    htmlLoadFail: msg => "HTML लोड नहीं हो सका: " + msg,
+    memLoadFail: msg => "बैकअप फ़ाइल लोड नहीं हो सकी: " + msg,
+    noArticleFound: "कोई <article> तत्व नहीं मिला",
+    jsonNotArray: "JSON ऐरे प्रारूप में नहीं है",
+    exportFail: msg => "निर्यात विफल: " + msg,
+    exportSuccessShare: fn => "✅ \"" + fn + "\" निर्यात हो गया",
+    exportSuccessDownload: fn => "✅ \"" + fn + "\" डाउनलोड फ़ोल्डर में सहेजा गया",
+    deleteAriaLabel: "हटाएं",
+    htmlExportTitle: "नोट सूची",
+    htmlExportH1: "नोट सूची",
+    dtLocale: "hi-IN"
+  },
+  fr: {
+    appTitle: "📝 Notes",
+    appTabTitle: "Notes",
+    sortBtn: "Trier",
+    doneBtn: "OK",
+    searchBtn: "Rechercher",
+    categoryBtn: "Catégorie",
+    newBtn: "+ Nouveau",
+    searchPlaceholder: "Rechercher…",
+    searchingPrefix: "🔍 Recherche : ",
+    categoryFilterPrefix: "📁 Catégorie : ",
+    categoryFilterClear: "✕ Effacer",
+    sortBarLabel: "Tri :",
+    sortManual: "Manuel",
+    sortDateDesc: "Date↓",
+    sortDateAsc: "Date↑",
+    sortTitleDesc: "Titre↓",
+    sortTitleAsc: "Titre↑",
+    sortCategoryDesc: "Catégorie↓",
+    sortCategoryAsc: "Catégorie↑",
+    longpressHint: "≡ Glisser pour réorganiser, toucher OK",
+    emptyFiltered: "Aucune note correspondante",
+    emptyAll: "Aucune note. Touchez + pour en créer une.",
+    backBtn: "← Notes",
+    pinBtnOff: "📌",
+    pinBtnOn: "📌 Épinglée",
+    saveBtn: "💾 Enregistrer",
+    savedBtn: "✅ Enregistré",
+    deleteBtn: "Supprimer",
+    titlePlaceholder: "Titre",
+    titleLabel: "Titre",
+    categoryPlaceholder: "Catégorie",
+    categoryLabel: "Catégorie",
+    bodyPlaceholder: "Commencez à écrire…",
+    editorSettingsTitle: "⚙️ Réglages",
+    fontSizeLabel: "Taille de police",
+    lineHeightLabel: "Interligne",
+    editorOverrideBadge: "Réglage propre à cette note",
+    editorOverrideResetBtn: "Réinitialiser",
+    applyGlobalDefaultBtn: "Définir par défaut pour toutes les notes",
+    confirmApplyGlobalDefault: "Appliquer à toutes les notes ?",
+    appliedGlobalDefault: "✅ Valeur par défaut mise à jour",
+    closeBtn: "Fermer",
+    settingsTitle: "⚙️ Réglages",
+    themeSettingLabel: "Thème",
+    themeLightBtn: "Mode clair",
+    themeDarkBtn: "Mode sombre",
+    themeSystemBtn: "Selon l'appareil",
+    selfName: "Français",
+    listFontSizeLabel: "Taille de police (liste)",
+    listLineHeightLabel: "Interligne (liste)",
+    showDateLabel: "Afficher la date dans la liste",
+    lockHideLabel: "🔒 Masquer les notes verrouillées",
+    exportLabel: "Exporter",
+    importLabel: "Importer",
+    exportMemBtn: "Fichier de sauvegarde (.mem) [Recommandé]",
+    exportMemDesc: "Conserve les dates et catégories intactes",
+    exportTxtBtn: "Exporter en texte brut (.txt)",
+    exportTxtDesc: "Enregistre le texte dans un format lisible par d'autres apps",
+    importMemBtn: "Importer la sauvegarde (.mem)",
+    keepImportBtn: "Importer depuis Google Keep (.zip)",
+    categoryModalTitle: "📁 Filtrer par catégorie",
+    categoryAll: "Toutes",
+    categoryNone: "Sans catégorie",
+    lastUpdated: "Mis à jour : ",
+    createdLabel: "Créé : ",
+    dateFieldSettingLabel: "Date dans la liste",
+    dateFieldCreatedBtn: "Création",
+    dateFieldUpdatedBtn: "Mise à jour",
+    untitledNote: "(Note sans titre)",
+    confirmDeleteNote: "Supprimer cette note ?",
+    confirmExitApp: "Quitter l'application ?",
+    charCountLabel: "Afficher le nombre de caractères",
+    charCountPrefix: "Caractères : ",
+    confirmTitle: "Confirmer",
+    yesBtn: "Oui",
+    noBtn: "Non",
+    importedCount: n => n + " note(s) importée(s).",
+    csvLoadFail: msg => "Échec du chargement du CSV : " + msg,
+    jsonLoadFail: msg => "Échec du chargement du JSON : " + msg,
+    htmlLoadFail: msg => "Échec du chargement du HTML : " + msg,
+    memLoadFail: msg => "Échec du chargement de la sauvegarde : " + msg,
+    noArticleFound: "Aucun élément <article> trouvé",
+    jsonNotArray: "Le JSON n'est pas un tableau",
+    exportFail: msg => "Échec de l'export : " + msg,
+    exportSuccessShare: fn => "✅ « " + fn + " » exporté",
+    exportSuccessDownload: fn => "✅ « " + fn + " » enregistré dans Téléchargements",
+    deleteAriaLabel: "Supprimer",
+    htmlExportTitle: "Notes",
+    htmlExportH1: "Notes",
+    dtLocale: "fr-FR"
+  }
+};
+function t(key) {
+  const v = I18N[currentLang] ? I18N[currentLang][key] : undefined;
+  return v !== undefined ? v : I18N.ja[key];
+}
 
 // ── State ─────────────────────────────────────────────────
 let notes     = [];
 let currentId = null;
-let sortMode  = false;   // 手動並び替えモード
+let sortMode  = false;   // 手動並び替えモード（各行に「≡」「×」を表示するモード）
 let dragEl    = null;
-let autoSortKey = "manual"; // "manual"|"date-desc"|"date-asc"|"title-desc"|"title-asc"
-let categoryFilter = null; // null=すべて／""=カテゴリなし／それ以外=カテゴリ名
+let autoSortKey = "manual"; // "manual"|"date-desc"|"date-asc"|"title-desc"|"title-asc"|"category-desc"|"category-asc"
+let categoryFilterSet = new Set(); // 選択中のカテゴリ集合（空＝すべて表示／""はカテゴリなし）
+let dateField = "updatedAt"; // "updatedAt"|"createdAt" ─ 一覧表示・ソートに使う日時項目
+let searchMode   = false;  // 検索モード（「検索中の文字：」行の表示有無）
+let categoryMode = false;  // カテゴリモード（「表示中のカテゴリ：」行の表示有無）
+let sortBarVisible = false; // 並替：「手動」「日時」「題名」行の表示有無
+let deleteMode = false;    // 長押し削除モード（各行右端に×を表示）
+let deleteModeOrder = null; // 長押しモードに入る直前の並び順（モード中はこの順序で固定表示する）
 
 // ── Storage ───────────────────────────────────────────────
+// メモ1件として最低限の形を満たしているかを検証する（#7 起動時の整合性チェック）。
+// 壊れたレコードが1件混ざっていても、その1件だけを除外しアプリ全体のクラッシュを防ぐ。
+function isValidNoteRecord(n) {
+  if (!n || typeof n !== "object") return false;
+  if (n.id === undefined || n.id === null) return false;
+  if (n.title !== undefined && typeof n.title !== "string") return false;
+  if (n.body  !== undefined && typeof n.body  !== "string") return false;
+  return true;
+}
+// 保存データ文字列をパースし、配列の中身も1件ずつ検証した上で有効なメモだけを返す
+function parseAndValidateNotes(raw) {
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) throw new Error("not an array");
+  return parsed.filter(isValidNoteRecord);
+}
 function load() {
-  try { notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { notes = []; }
+  let loaded = null;
+  // 1) まずメインキーから読み込みを試みる
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    loaded = raw ? parseAndValidateNotes(raw) : [];
+  } catch {
+    loaded = null;
+  }
+  // 2) メインキーが壊れている／読めない場合は、直前に正常保存できたバックアップ世代から復元する（#1）
+  if (loaded === null) {
+    try {
+      const backupRaw = localStorage.getItem(STORAGE_BACKUP_KEY);
+      loaded = backupRaw ? parseAndValidateNotes(backupRaw) : [];
+    } catch {
+      loaded = [];
+    }
+  }
+  notes = loaded;
   // pinned／category フィールドが無い古いデータに対応
   notes.forEach(n => {
+    if (n.title === undefined) n.title = "";
+    if (n.body  === undefined) n.body  = "";
     if (n.pinned === undefined) n.pinned = false;
+    if (n.locked === undefined) n.locked = false;
     if (n.category === undefined || n.category === null) n.category = "";
+    if (!n.createdAt) n.createdAt = n.updatedAt || new Date().toISOString();
   });
+  // 起動時クリーンアップ：題名・カテゴリ・本文がすべて未記入のメモを破棄する
+  // （本機能実装前の残存データや、アプリが強制終了され離脱イベントを検知できなかった場合の保険）
+  const beforeCount = notes.length;
+  notes = notes.filter(n => !isNoteEmpty(n));
+  if (notes.length !== beforeCount) save();
 }
+// 保存：新データを検証してから確定させ、直前の世代をバックアップとして残す（#4 世代管理）
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); } catch {}
+  try {
+    const json = JSON.stringify(notes);
+    // 新データを一時キーに書き込み、正しく読み書きできるか検証する
+    const tmpKey = STORAGE_KEY + "-tmp";
+    localStorage.setItem(tmpKey, json);
+    const verify = localStorage.getItem(tmpKey);
+    if (verify !== json) throw new Error("write verification failed");
+    JSON.parse(verify); // パース可能かも確認
+    // 検証OKならば、現在のメインデータを1世代分のバックアップとして退避してから確定させる
+    const prevMain = localStorage.getItem(STORAGE_KEY);
+    if (prevMain) localStorage.setItem(STORAGE_BACKUP_KEY, prevMain);
+    localStorage.setItem(STORAGE_KEY, verify);
+    localStorage.removeItem(tmpKey);
+  } catch (err) {
+    console.error("メモの保存に失敗しました:", err);
+  }
 }
 let listLhMult  = 2.0;   // 一覧の行間倍率（フォントサイズに対する行の高さの倍率）
 let showDateEnabled = true;
+let lockHideEnabled = false; // 🔒メモを一覧に表示しないかどうか
+let charCountEnabled = false; // メモ編集画面で日時の代わりに文字数を表示するか
+let defaultEditorFs = 18; // メモ個別設定が無い場合に使うデフォルトの文字サイズ
+let defaultEditorLh = 1.6; // メモ個別設定が無い場合に使うデフォルトの行間
+let themeSetting = "system"; // "light"|"dark"|"system" ─ 既定は"system"（端末のテーマを読めればそれに合わせ、読めなければライト）
+
+// 設定値からライト／ダークいずれを表示するかを決定する（起動時／設定変更時に一度だけ判定）
+function resolveTheme(setting) {
+  if (setting === "light" || setting === "dark") return setting;
+  try {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  } catch {}
+  return "light";
+}
+// テーマを実際に適用する（ステータスバー・テーマカラーも合わせて更新）
+function applyThemeSetting(setting) {
+  themeSetting = setting;
+  const resolved = resolveTheme(setting);
+  document.documentElement.setAttribute("data-theme", resolved);
+  const themeColorMeta = document.getElementById("theme-color-meta");
+  const statusBarMeta  = document.getElementById("status-bar-meta");
+  if (themeColorMeta) themeColorMeta.setAttribute("content", resolved === "dark" ? "#1C1C1E" : "#FFFFFF");
+  if (statusBarMeta)  statusBarMeta.setAttribute("content", resolved === "dark" ? "black-translucent" : "default");
+  updateThemeButtons();
+}
+function updateThemeButtons() {
+  document.getElementById("theme-light").classList.toggle("active", themeSetting === "light");
+  document.getElementById("theme-dark").classList.toggle("active", themeSetting === "dark");
+  document.getElementById("theme-system").classList.toggle("active", themeSetting === "system");
+}
 
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+    applyThemeSetting(["light","dark","system"].includes(s.theme) ? s.theme : "system");
+    currentLang = ["en","es","pt","ko","id","zh","th","vi","de","hi","fr"].includes(s.lang) ? s.lang : "ja";
     applyListFs(s.listFs   || 18);
-    applyEditorFs(s.editorFs || 18);
+    defaultEditorFs = s.editorFs || 18;
+    defaultEditorLh = s.editorLh || 1.6;
     applyListLh(s.listLh   || 1.8);
-    applyEditorLh(s.editorLh || 1.6);
+    applyEditorFs(defaultEditorFs);
+    applyEditorLh(defaultEditorLh);
     showDateEnabled = s.showDate !== false; // 未設定時は表示する
     showDateToggle.checked = showDateEnabled;
+    lockHideEnabled = s.lockHide === true; // 未設定時は表示する（非表示にしない）
+    lockHideToggle.checked = lockHideEnabled;
+    charCountEnabled = s.charCount === true; // 未設定時は日時を表示する
+    document.getElementById("char-count-toggle").checked = charCountEnabled;
+    dateField = s.dateField === "createdAt" ? "createdAt" : "updatedAt";
+    updateDateFieldButtons();
     if (s.autoSortKey) setAutoSort(s.autoSortKey, false);
+    if (Array.isArray(s.categoryFilter)) categoryFilterSet = new Set(s.categoryFilter);
   } catch {}
+  applyLanguage();
 }
 function saveSettings() {
   const lfs = +listFsRange.value;
-  const efs = +editorFsRange.value;
   const llh = +listLhRange.value;
-  const elh = +editorLhRange.value;
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      listFs:lfs, editorFs:efs, listLh:llh, editorLh:elh,
-      showDate:showDateEnabled, autoSortKey
+      listFs:lfs, editorFs:defaultEditorFs, listLh:llh, editorLh:defaultEditorLh,
+      showDate:showDateEnabled, autoSortKey, lang:currentLang, dateField, charCount:charCountEnabled,
+      lockHide:lockHideEnabled, categoryFilter:[...categoryFilterSet], theme:themeSetting
     }));
   } catch {}
+}
+
+// ── 言語切り替え ──────────────────────────────────────────
+function setLanguage(lang) {
+  currentLang = ["en","es","pt","ko","id","zh","th","vi","de","hi","fr"].includes(lang) ? lang : "ja";
+  saveSettings();
+  applyLanguage();
+}
+function applyLanguage() {
+  updateDtFmt();
+  document.documentElement.lang = currentLang;
+  document.title = t("appTabTitle");
+  const metaTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (metaTitle) metaTitle.content = t("appTabTitle");
+
+  document.getElementById("header-title-text").textContent = t("appTitle").replace(/^📝\s*/, "");
+  sortToggle.textContent = t("sortBtn");
+  document.getElementById("search-prefix").textContent = t("searchingPrefix");
+  document.getElementById("search-clear").textContent = t("categoryFilterClear");
+  document.getElementById("sort-bar-clear").textContent = t("categoryFilterClear");
+  document.getElementById("search-toggle").textContent = t("searchBtn");
+  categoryBtn.textContent = t("categoryBtn");
+  document.getElementById("add-btn").textContent = t("newBtn");
+  searchEl.placeholder = t("searchPlaceholder");
+  document.getElementById("category-filter-prefix").textContent = t("categoryFilterPrefix");
+  document.getElementById("category-filter-clear").textContent = t("categoryFilterClear");
+  document.getElementById("sort-bar-label").textContent = t("sortBarLabel");
+  document.getElementById("sb-manual").textContent = t("sortManual");
+  document.getElementById("sb-date-toggle").textContent = dateAsc ? t("sortDateAsc") : t("sortDateDesc");
+  document.getElementById("sb-title-toggle").textContent = titleAsc ? t("sortTitleAsc") : t("sortTitleDesc");
+  document.getElementById("sb-category-toggle").textContent = categoryAsc ? t("sortCategoryAsc") : t("sortCategoryDesc");
+  hint.textContent = t("longpressHint");
+
+  document.getElementById("back-btn").textContent = t("backBtn");
+  const n0 = currentId ? notes.find(x => x.id === currentId) : null;
+  updatePinBtn(n0 ? n0.pinned : false);
+  updateLockBtn(n0 ? n0.locked : false);
+  setSaveBtnText(t("saveBtn"));
+  document.getElementById("title-label").textContent = t("titleLabel");
+  document.getElementById("category-label").textContent = t("categoryLabel");
+  bodyEl.placeholder = t("bodyPlaceholder");
+  if (currentId && n0) updateDetailHeaderInfo();
+
+  document.getElementById("editor-settings-title").textContent = t("editorSettingsTitle");
+  editorOverrideBadge.textContent = t("editorOverrideBadge");
+  editorOverrideResetBtn.textContent = t("editorOverrideResetBtn");
+  applyGlobalDefaultBtn.textContent = t("applyGlobalDefaultBtn");
+  document.getElementById("editor-fs-label").textContent = t("fontSizeLabel");
+  document.getElementById("editor-lh-label").textContent = t("lineHeightLabel");
+  document.getElementById("editor-settings-modal-close").textContent = t("closeBtn");
+  document.getElementById("char-count-label").textContent = t("charCountLabel");
+
+  deleteConfirmTitle.textContent = _confirmIcon + " " + t("confirmTitle");
+  document.getElementById("delete-confirm-yes").textContent = t("yesBtn");
+  document.getElementById("delete-confirm-no").textContent = t("noBtn");
+  if (!deleteConfirmModalBg.classList.contains("hidden")) deleteConfirmMessage.textContent = t(_confirmMessageKey);
+
+  document.getElementById("settings-title").textContent = t("settingsTitle");
+  document.getElementById("theme-setting-label").textContent = t("themeSettingLabel");
+  document.getElementById("theme-light").textContent = t("themeLightBtn");
+  document.getElementById("theme-dark").textContent = t("themeDarkBtn");
+  document.getElementById("theme-system").textContent = t("themeSystemBtn");
+  document.getElementById("language-label").textContent = "Language/" + t("selfName");
+  document.getElementById("list-fs-label").textContent = t("listFontSizeLabel");
+  document.getElementById("list-lh-label").textContent = t("listLineHeightLabel");
+  document.getElementById("date-field-setting-label").textContent = t("dateFieldSettingLabel");
+  document.getElementById("date-field-created").textContent = t("dateFieldCreatedBtn");
+  document.getElementById("date-field-updated").textContent = t("dateFieldUpdatedBtn");
+  document.getElementById("show-date-label").textContent = t("showDateLabel");
+  document.getElementById("lock-hide-label").textContent = t("lockHideLabel");
+  document.getElementById("export-label-text").textContent = t("exportLabel");
+  document.getElementById("import-label-text").textContent = t("importLabel");
+  document.getElementById("mem-export-btn").textContent = t("exportMemBtn");
+  document.getElementById("mem-export-desc").textContent = t("exportMemDesc");
+  document.getElementById("txt-export-btn").textContent = t("exportTxtBtn");
+  document.getElementById("txt-export-desc").textContent = t("exportTxtDesc");
+  document.getElementById("mem-import-btn").textContent = t("importMemBtn");
+  document.getElementById("keep-import-btn").textContent = t("keepImportBtn");
+  document.getElementById("modal-close").textContent = t("closeBtn");
+
+  document.getElementById("category-modal-title").textContent = t("categoryModalTitle");
+  document.getElementById("category-modal-close").textContent = t("closeBtn");
+
+  document.getElementById("lang-ja").classList.toggle("active", currentLang === "ja");
+  document.getElementById("lang-en").classList.toggle("active", currentLang === "en");
+  document.getElementById("lang-es").classList.toggle("active", currentLang === "es");
+  document.getElementById("lang-pt").classList.toggle("active", currentLang === "pt");
+  document.getElementById("lang-ko").classList.toggle("active", currentLang === "ko");
+  document.getElementById("lang-id").classList.toggle("active", currentLang === "id");
+  document.getElementById("lang-zh").classList.toggle("active", currentLang === "zh");
+  document.getElementById("lang-th").classList.toggle("active", currentLang === "th");
+  document.getElementById("lang-vi").classList.toggle("active", currentLang === "vi");
+  document.getElementById("lang-de").classList.toggle("active", currentLang === "de");
+  document.getElementById("lang-hi").classList.toggle("active", currentLang === "hi");
+  document.getElementById("lang-fr").classList.toggle("active", currentLang === "fr");
+
+  updateCategoryBtnLabel();
+  if (!categoryModalBg.classList.contains("hidden")) buildCategoryModal();
+  _lastListKey = "";
+  renderList();
 }
 
 function applyListFs(v) {
@@ -374,11 +1885,28 @@ function applyListFs(v) {
   listFsRange.value = vv;
   listFsVal.textContent = vv + "px";
   updateRowMinHeight();
+  updateCatFs();
+}
+// 一覧上のカテゴリ名フォントサイズ：12px固定（ただし一覧のフォントサイズが11px以下の場合はそれに合わせる）
+function updateCatFs() {
+  const vv = +listFsRange.value;
+  const catFs = vv <= 11 ? vv : 12;
+  document.documentElement.style.setProperty("--cat-fs", catFs + "px");
 }
 function applyEditorFs(v) {
   document.documentElement.style.setProperty("--editor-fs", v + "px");
   editorFsRange.value = v;
   editorFsVal.textContent = v + "px";
+}
+// メモ固有のフォントサイズ／行間の保存欄に値が入っているか（＝デフォルト値ではなく固有値を保持しているか）でバッジの表示・非表示を切り替える
+function updateEditorOverrideBadge() {
+  if (!editorOverrideBadge) return;
+  let hasOwnValue = false;
+  if (currentId) {
+    const n = notes.find(x => x.id === currentId);
+    hasOwnValue = !!(n && (n.fontSize !== undefined || n.lineHeight !== undefined));
+  }
+  editorOverrideBadge.style.display = hasOwnValue ? "" : "none";
 }
 function applyListLh(v) {
   listLhMult = +v;
@@ -400,13 +1928,34 @@ function updateRowMinHeight() {
 }
 
 // ── Helpers ───────────────────────────────────────────────
-const dtFmt = new Intl.DateTimeFormat("ja-JP", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+let dtFmt = new Intl.DateTimeFormat("ja-JP", {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+function updateDtFmt() {
+  dtFmt = new Intl.DateTimeFormat(t("dtLocale"), {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+}
 function fmt(iso) { return dtFmt.format(new Date(iso)); }
 function makeNote() {
-  return {id:Date.now(), title:"", body:"", category:"", updatedAt:new Date().toISOString(), pinned:false};
+  const now = new Date().toISOString();
+  return {id:Date.now(), title:"", body:"", category:"", createdAt:now, updatedAt:now, pinned:false, locked:false};
+}
+function dispDate(n) {
+  return (dateField === "createdAt" ? n.createdAt : n.updatedAt) || n.updatedAt || n.createdAt;
+}
+function dateFieldLabel() {
+  return dateField === "createdAt" ? t("createdLabel") : t("lastUpdated");
+}
+function updateDetailHeaderInfo() {
+  if (!currentId) return;
+  const n = notes.find(x => x.id === currentId);
+  if (!n) return;
+  categoryDateDisplay.textContent = dateFieldLabel() + fmt(dispDate(n));
+  detailCharCount.textContent = charCountEnabled ? (t("charCountPrefix") + (bodyEl.value || "").length) : "";
 }
 function categoryLabel(cat) {
-  return (cat && cat.trim()) ? cat.trim() : "カテゴリなし";
+  return (cat && cat.trim()) ? cat.trim() : t("categoryNone");
+}
+// 一覧に表示される「題名」（空欄時は本文の先頭40文字）を取得する
+function displayTitle(n) {
+  return (n.title && n.title.trim()) ? n.title.trim() : (n.body||"").trim().substring(0,40);
 }
 function getAllCategories() {
   const s = new Set();
@@ -446,9 +1995,9 @@ async function exportViaCapacitor(blob, filename) {
     const base64 = await blobToBase64(blob);
     const result = await Filesystem.writeFile({ path: filename, data: base64, directory: "CACHE" });
     if (Share && Share.share) {
-      await Share.share({ title: filename, url: result.uri, dialogTitle: filename + " を保存" });
+      await Share.share({ title: filename, url: result.uri, dialogTitle: filename });
     }
-    showToast("✅ 「" + filename + "」の書き出しが完了しました");
+    showToast(t("exportSuccessShare")(filename));
     return true;
   } catch (err) {
     console.error("Capacitor経由の書き出しに失敗:", err);
@@ -476,7 +2025,7 @@ async function exportFile(blob, filename, accept) {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      showToast("✅ 「" + filename + "」の書き出しが完了しました");
+      showToast(t("exportSuccessShare")(filename));
       return;
     } catch (err) {
       if (err && err.name === "AbortError") return; // ユーザーがキャンセル
@@ -488,7 +2037,7 @@ async function exportFile(blob, filename, accept) {
       const file = new File([blob], filename, {type: blob.type});
       if (navigator.canShare({files:[file]})) {
         await navigator.share({files:[file], title: filename});
-        showToast("✅ 「" + filename + "」の書き出しが完了しました");
+        showToast(t("exportSuccessShare")(filename));
         return;
       }
     } catch (err) {
@@ -504,9 +2053,9 @@ async function exportFile(blob, filename, accept) {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast("✅ 「" + filename + "」をダウンロードフォルダに書き出しました");
+    showToast(t("exportSuccessDownload")(filename));
   } catch (err) {
-    alert("書き出しに失敗しました: " + err.message);
+    alert(t("exportFail")(err.message));
   }
 }
 
@@ -517,7 +2066,8 @@ const noteList    = document.getElementById("note-list");
 const searchEl    = document.getElementById("search");
 const titleEl     = document.getElementById("note-title");
 const bodyEl      = document.getElementById("note-body");
-const detailDate  = document.getElementById("detail-date");
+const categoryDateDisplay = document.getElementById("category-date-display");
+const detailCharCount = document.getElementById("detail-charcount");
 const sortToggle  = document.getElementById("sort-toggle");
 const sortBar     = document.getElementById("sort-bar");
 const modalBg     = document.getElementById("modal-bg");
@@ -532,39 +2082,65 @@ const editorLhRange = document.getElementById("editor-lh-range");
 const editorLhVal   = document.getElementById("editor-lh-val");
 const showDateToggle = document.getElementById("show-date-toggle");
 const pinBtn      = document.getElementById("pin-btn");
+const lockBtn     = document.getElementById("lock-btn");
+const lockHideToggle = document.getElementById("lock-hide-toggle");
 const categoryEl  = document.getElementById("note-category");
 const categoryBtn = document.getElementById("category-btn");
 const categoryModalBg = document.getElementById("category-modal-bg");
+const deleteConfirmModalBg = document.getElementById("delete-confirm-modal-bg");
+const deleteConfirmMessage = document.getElementById("delete-confirm-message");
 const editorSettingsBtn = document.getElementById("editor-settings-btn");
 const editorSettingsModalBg = document.getElementById("editor-settings-modal-bg");
+const editorOverrideBadge = document.getElementById("editor-override-badge");
+const editorOverrideResetBtn = document.getElementById("editor-override-reset-btn");
+const applyGlobalDefaultBtn = document.getElementById("apply-global-default-btn");
+const deleteConfirmTitle = document.getElementById("delete-confirm-title");
 const categoryFieldWrap  = document.getElementById("category-field-wrap");
 const categorySuggest    = document.getElementById("category-suggest");
 const categoryOptionList = document.getElementById("category-option-list");
+const searchWrap         = document.getElementById("search-wrap");
+const searchToggleBtn    = document.getElementById("search-toggle");
+const searchClearBtn     = document.getElementById("search-clear");
+const categoryFilterLabelEl = document.getElementById("category-filter-label");
+const sortBarClearBtn    = document.getElementById("sort-bar-clear");
 
 // ── Auto-sort ─────────────────────────────────────────────
 function setAutoSort(key, doRender = true) {
   autoSortKey = key;
-  document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
-  if (key === "manual") document.getElementById("sb-manual").classList.add("active");
+  document.getElementById("sb-date-toggle").classList.remove("active");
+  document.getElementById("sb-title-toggle").classList.remove("active");
+  document.getElementById("sb-category-toggle").classList.remove("active");
+  if (key === "date-asc" || key === "date-desc") document.getElementById("sb-date-toggle").classList.add("active");
+  if (key === "title-asc" || key === "title-desc") document.getElementById("sb-title-toggle").classList.add("active");
+  if (key === "category-asc" || key === "category-desc") document.getElementById("sb-category-toggle").classList.add("active");
+  // sb-manual の黄色表示は「手動並び替えモード」中(sortMode)かどうかで決まる（enterManualMode/exitManualMode 側で制御）
   if (doRender) renderList();
 }
 
 function getSortedList(list) {
-  const pinned    = list.filter(n => n.pinned);
-  const unpinned  = list.filter(n => !n.pinned);
   function cmp(a, b) {
-    if (autoSortKey === "date-desc")  return new Date(b.updatedAt) - new Date(a.updatedAt);
-    if (autoSortKey === "date-asc")   return new Date(a.updatedAt) - new Date(b.updatedAt);
-    if (autoSortKey === "title-desc") return b.title.localeCompare(a.title, "ja");
-    if (autoSortKey === "title-asc")  return a.title.localeCompare(b.title, "ja");
+    if (autoSortKey === "date-desc")  return new Date(dispDate(b)) - new Date(dispDate(a));
+    if (autoSortKey === "date-asc")   return new Date(dispDate(a)) - new Date(dispDate(b));
+    if (autoSortKey === "title-desc") return displayTitle(b).localeCompare(displayTitle(a), "ja");
+    if (autoSortKey === "title-asc")  return displayTitle(a).localeCompare(displayTitle(b), "ja");
+    if (autoSortKey === "category-desc") return (b.category||"").localeCompare((a.category||""), "ja");
+    if (autoSortKey === "category-asc")  return (a.category||"").localeCompare((b.category||""), "ja");
     return 0; // manual: 元の順を保持
   }
+  if (deleteMode) {
+    // 長押し削除モード中は並び替えを行わず、モードに入る直前の並び順を維持する
+    if (deleteModeOrder) {
+      const idx = id => { const i = deleteModeOrder.indexOf(id); return i === -1 ? Infinity : i; };
+      return [...list].sort((a, b) => idx(a.id) - idx(b.id));
+    }
+    return list;
+  }
+  const pinned    = list.filter(n => n.pinned);
+  const unpinned  = list.filter(n => !n.pinned);
   const sortedPinned   = autoSortKey !== "manual" ? [...pinned].sort(cmp)   : pinned;
   const sortedUnpinned = autoSortKey !== "manual" ? [...unpinned].sort(cmp) : unpinned;
   return [...sortedPinned, ...sortedUnpinned];
 }
-
-document.getElementById("sb-manual").addEventListener("click", () => { setAutoSort("manual"); saveSettings(); });
 
 // ── Views ─────────────────────────────────────────────────
 function showList() {
@@ -583,29 +2159,63 @@ function showDetail(id) {
   bodyEl.value  = n.body;
   categoryEl.value = n.category || "";
   closeCategorySuggest();
-  detailDate.textContent = "最終更新: " + fmt(n.updatedAt);
+  applyNoteEditorStyle(n);
+  updateDetailHeaderInfo();
   updatePinBtn(n.pinned);
+  updateLockBtn(n.locked);
+  _editDirty = false;
+  _lastSaveAt = Date.now();
+}
+// メモ個別の文字サイズ・行間（無ければデフォルト値）を編集画面に適用する
+function applyNoteEditorStyle(n) {
+  applyEditorFs((n && n.fontSize)   ? n.fontSize   : defaultEditorFs);
+  applyEditorLh((n && n.lineHeight) ? n.lineHeight : defaultEditorLh);
+  updateEditorOverrideBadge();
+}
+// 文字設定スライダー操作時：表示中のメモにだけ文字サイズ・行間を記憶させる
+function saveCurrentNoteEditorStyle() {
+  if (!currentId) return;
+  const idx = notes.findIndex(n => n.id === currentId);
+  if (idx === -1) return;
+  notes[idx].fontSize   = +editorFsRange.value;
+  notes[idx].lineHeight = +editorLhRange.value;
+  save();
 }
 function updatePinBtn(pinned) {
-  pinBtn.textContent = pinned ? "📌固定中" : "📌";
-  pinBtn.style.color = pinned ? "var(--accent)" : "";
+  pinBtn.textContent = t("pinBtnOff");
+  pinBtn.classList.toggle("pin-active", pinned);
+}
+function updateLockBtn(locked) {
+  lockBtn.classList.toggle("lock-active", locked);
+}
+// save-btn の表示文字列を設定する（「💾 」で始まる文字列なら、アイコン部分だけを
+// 縁取り用spanで包み直す。「✅ 保存済」等アイコンが異なる場合はそのまま表示する）
+function setSaveBtnText(str) {
+  const btn = document.getElementById("save-btn");
+  if (str.charAt(0) === "💾") {
+    btn.innerHTML = '<span class="save-icon">💾</span>' + str.slice(2);
+  } else {
+    btn.textContent = str;
+  }
 }
 
 // ── Render list（仮想DOM差分なし・軽量DOM再構築）─────────
 let _lastListKey = "";
 function renderList() {
   const q    = searchEl.value.toLowerCase();
-  let base = sortMode
-    ? [...notes]
-    : notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
-  if (!sortMode && categoryFilter !== null) {
-    base = base.filter(n => (n.category||"").trim() === categoryFilter);
+  let base = notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  if (categoryMode && categoryFilterSet.size > 0) {
+    base = base.filter(n => categoryFilterSet.has((n.category||"").trim()));
+  }
+  if (lockHideEnabled) {
+    base = base.filter(n => !n.locked);
   }
   const list = getSortedList(base);
 
   // 変化がなければスキップ
-  const key = list.map(n => n.id + ":" + n.updatedAt + ":" + n.pinned + ":" + n.category).join("|") +
-              "|sm:" + sortMode + "|q:" + q + "|cf:" + categoryFilter;
+  const cfKey = [...categoryFilterSet].sort().join(",");
+  const key = list.map(n => n.id + ":" + n.createdAt + ":" + n.updatedAt + ":" + n.pinned + ":" + n.category + ":" + n.locked).join("|") +
+              "|sm:" + sortMode + "|q:" + q + "|cf:" + cfKey + "|cm:" + categoryMode + "|df:" + dateField + "|lh:" + lockHideEnabled;
   if (key === _lastListKey) return;
   _lastListKey = key;
 
@@ -615,7 +2225,7 @@ function renderList() {
     const li = document.createElement("li");
     li.id = "empty-msg";
     li.style.cssText = "color:var(--muted);font-size:13px;text-align:center;padding:40px 16px";
-    li.textContent = (q || categoryFilter !== null) ? "一致するメモがありません" : "メモがありません。＋ で作成してください。";
+    li.textContent = (q || (categoryMode && categoryFilterSet.size > 0)) ? t("emptyFiltered") : t("emptyAll");
     frag.appendChild(li);
   } else {
     list.forEach(n => frag.appendChild(buildRow(n)));
@@ -626,83 +2236,136 @@ function renderList() {
 
 function buildRow(n) {
   const li = document.createElement("li");
-  li.className = "note-row" + (sortMode ? " sort-mode" : "") + (n.pinned ? " pinned-row" : "");
+  li.className = "note-row" + (sortMode ? " sort-mode" : "") + (deleteMode ? " delete-mode" : "") + (n.pinned ? " pinned-row" : "");
   li.dataset.id = n.id;
 
-  // ドラッグハンドル
+  // ドラッグハンドル（手動並び替えモード時のみCSSで表示）
   const handle = document.createElement("span");
   handle.className = "drag-handle";
   handle.textContent = "≡";
   li.appendChild(handle);
 
-  // ピンアイコン
-  if (n.pinned) {
-    const pi = document.createElement("span");
-    pi.className = "pin-icon";
-    pi.textContent = "📌";
-    li.appendChild(pi);
-  }
-
-  // 本文アイコン
+  // 本文アイコン（固定中は📌、それ以外は通常の黄色ドット）
   const icon = document.createElement("span");
-  icon.className = "row-icon";
-  icon.textContent = "📄";
+  if (n.pinned) {
+    icon.className = "row-icon row-icon-pin";
+    const glyph = document.createElement("span");
+    glyph.className = "pin-glyph";
+    glyph.textContent = "📌";
+    icon.appendChild(glyph);
+  } else {
+    icon.className = "row-icon";
+  }
   li.appendChild(icon);
 
   // タイトル
   const rowTitle = document.createElement("span");
   rowTitle.className = "row-title";
-  rowTitle.textContent = (n.title && n.title.trim()) ? n.title : ((n.body||"").trim().substring(0,40) || "(空白メモ)");
+  rowTitle.textContent = displayTitle(n);
+  if (!(n.title && n.title.trim())) rowTitle.classList.add("row-title-fallback");
   li.appendChild(rowTitle);
 
-  if (!sortMode) {
-    // カテゴリタグ（カテゴリが設定されているメモのみ表示）
+  if (sortMode) {
+    // 手動並び替えモード：ドラッグでの並べ替えのみ（削除ボタンは表示しない）
+    setupDrag(li);
+  } else if (deleteMode) {
+    // 長押し削除モード：カテゴリ・日時は通常通り表示し、右端にピン/ロックのトグルと削除ボタンを追加
     if ((n.category||"").trim()) {
       const rowCat = document.createElement("span");
       rowCat.className = "row-category";
       rowCat.textContent = n.category.trim();
       li.appendChild(rowCat);
     }
-
-    // 日時（設定でオンオフ可能）
     if (showDateEnabled) {
       const rowDate = document.createElement("span");
       rowDate.className = "row-date";
-      rowDate.textContent = fmt(n.updatedAt);
+      rowDate.textContent = fmt(dispDate(n));
       li.appendChild(rowDate);
     }
-
+    appendToggleButton(li, n, "pin");
+    appendToggleButton(li, n, "lock");
+    appendDeleteButton(li, n.id);
+  } else {
+    // 通常モード
+    if ((n.category||"").trim()) {
+      const rowCat = document.createElement("span");
+      rowCat.className = "row-category";
+      rowCat.textContent = n.category.trim();
+      li.appendChild(rowCat);
+    }
+    const rowLock = document.createElement("span");
+    rowLock.className = "row-lock" + (n.locked ? "" : " row-lock-empty");
+    rowLock.textContent = "🔒";
+    li.appendChild(rowLock);
+    if (showDateEnabled) {
+      const rowDate = document.createElement("span");
+      rowDate.className = "row-date";
+      rowDate.textContent = fmt(dispDate(n));
+      li.appendChild(rowDate);
+    }
     li.addEventListener("click", rowClickHandler);
     setupLongPress(li);
-  } else {
-    // 削除ボタン（並べ替えモード時のみ右側に表示）
-    const delBtn = document.createElement("button");
-    delBtn.type = "button";
-    delBtn.className = "row-del";
-    delBtn.dataset.id = n.id;
-    delBtn.setAttribute("aria-label","削除");
-    delBtn.textContent = "×";
-    let delHandled = false;
-    const doDelete = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (delHandled) return; // touchend と click の二重発火を防止
-      delHandled = true;
-      setTimeout(() => { delHandled = false; }, 500);
-      const id = Number(delBtn.dataset.id);
-      if (!confirm("このメモを削除しますか？")) return;
-      notes = notes.filter(x => x.id !== id);
+  }
+  return li;
+}
+
+// ピン／ロックのトグルボタン（長押し削除モードの行に表示。タップで即時に固定・ロック状態を切り替える。確認画面なし）
+function appendToggleButton(li, note, type) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  const isOn = type === "pin" ? note.pinned : note.locked;
+  btn.className = "row-toggle" + (isOn ? " active" : "");
+  btn.dataset.id = note.id;
+  btn.dataset.type = type;
+  btn.setAttribute("aria-label", type === "pin" ? t("pinBtnOn") : t("lockBtnAria") || "Lock");
+  btn.textContent = type === "pin" ? "📌" : "🔒";
+  let handled = false;
+  const doToggle = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (handled) return; // touchend と click の二重発火を防止
+    handled = true;
+    setTimeout(() => { handled = false; }, 500);
+    const noteId = Number(btn.dataset.id);
+    const idx = notes.findIndex(x => x.id === noteId);
+    if (idx === -1) return;
+    if (type === "pin") notes[idx].pinned = !notes[idx].pinned;
+    else notes[idx].locked = !notes[idx].locked;
+    save();
+    _lastListKey = "";
+    renderList();
+  };
+  btn.addEventListener("touchend", doToggle, {passive:false});
+  btn.addEventListener("click", doToggle);
+  li.appendChild(btn);
+}
+
+// 削除ボタン（長押し削除モードの行右端に表示）
+function appendDeleteButton(li, id) {
+  const delBtn = document.createElement("button");
+  delBtn.type = "button";
+  delBtn.className = "row-del";
+  delBtn.dataset.id = id;
+  delBtn.setAttribute("aria-label", t("deleteAriaLabel"));
+  delBtn.textContent = "×";
+  let delHandled = false;
+  const doDelete = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (delHandled) return; // touchend と click の二重発火を防止
+    delHandled = true;
+    setTimeout(() => { delHandled = false; }, 500);
+    const noteId = Number(delBtn.dataset.id);
+    showDeleteConfirm(() => {
+      notes = notes.filter(x => x.id !== noteId);
       save();
       _lastListKey = "";
       renderList();
-    };
-    delBtn.addEventListener("touchend", doDelete, {passive:false});
-    delBtn.addEventListener("click", doDelete);
-    li.appendChild(delBtn);
-
-    setupDrag(li);
-  }
-  return li;
+    });
+  };
+  delBtn.addEventListener("touchend", doDelete, {passive:false});
+  delBtn.addEventListener("click", doDelete);
+  li.appendChild(delBtn);
 }
 
 function rowClickHandler(e) {
@@ -711,10 +2374,10 @@ function rowClickHandler(e) {
   showDetail(id);
 }
 
-// ── Long-press → sort mode ────────────────────────────────
+// ── Long-press → 削除モード ────────────────────────────────
 function setupLongPress(li) {
   let timer = null;
-  const start  = () => { timer = setTimeout(enterSortMode, 500); };
+  const start  = () => { timer = setTimeout(enterDeleteMode, 500); };
   const cancel = () => { clearTimeout(timer); timer = null; };
   li.addEventListener("touchstart", start,  {passive:true});
   li.addEventListener("touchend",   cancel, {passive:true});
@@ -723,15 +2386,40 @@ function setupLongPress(li) {
   li.addEventListener("mouseup",    cancel);
   li.addEventListener("mouseleave", cancel);
 }
-function enterSortMode() {
-  sortMode = true;
-  sortToggle.classList.add("active");
-  sortToggle.textContent = "完了";
-  searchEl.disabled = true;
-  hint.classList.add("show");
+// 長押しモードに入った直後は、指を離した際にブラウザ／WebViewが発行する
+// 「合成click（synthetic click）」がリスト行上で発生し、下の「外側タップで終了」判定に
+// 引っかかって即座にモードを抜けてしまう。これを防ぐため、進入直後の短い猶予時間だけ
+// その終了判定を無視するようにする。
+let deleteModeGuardUntil = 0;
+const DELETE_MODE_ENTER_GUARD_MS = 400;
+function enterDeleteMode() {
+  if (deleteMode) return;
+  // 長押しモードに入る直前の並び順をそのまま保存しておく
+  const q = searchEl.value.toLowerCase();
+  let base = notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  if (categoryMode && categoryFilterSet.size > 0) base = base.filter(n => categoryFilterSet.has((n.category||"").trim()));
+  if (lockHideEnabled) base = base.filter(n => !n.locked);
+  deleteModeOrder = getSortedList(base).map(n => n.id);
+  deleteMode = true;
+  deleteModeGuardUntil = Date.now() + DELETE_MODE_ENTER_GUARD_MS;
   _lastListKey = "";
   renderList();
 }
+function exitDeleteMode() {
+  if (!deleteMode) return;
+  deleteMode = false;
+  deleteModeOrder = null;
+  _lastListKey = "";
+  renderList();
+}
+// ×・🔒・📌以外の場所をタップしたら削除モードを終了する
+// （ただし、長押しでモードに入った直後の合成clickは無視する）
+document.addEventListener("click", e => {
+  if (!deleteMode) return;
+  if (Date.now() < deleteModeGuardUntil) return;
+  if (e.target.closest(".row-del, .row-toggle")) return;
+  exitDeleteMode();
+}, {passive:true});
 
 // ── Drag & Drop (touch + mouse) ───────────────────────────
 function setupDrag(li) {
@@ -807,45 +2495,137 @@ function moveNote(fromId, toId, insertAfter) {
   save();
 }
 
-// ── Sort toggle button（並替モード切替 ＋ ソートバー表示切替）─
+// ── 並替バー（手動／日時／題名）の表示・非表示 ─────────────
+function showSortBar() {
+  sortBarVisible = true;
+  sortToggle.classList.add("active");
+  sortBar.style.display = "flex";
+}
+function hideSortBar() {
+  sortBarVisible = false;
+  sortToggle.classList.remove("active");
+  sortBar.style.display = "none";
+}
+
+// ── 手動並び替えモード（各行に「≡」「×」を表示）───────────
+function enterManualMode() {
+  sortMode = true;
+  deleteMode = false;
+  deleteModeOrder = null;
+  document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("sb-manual").classList.add("active");
+  autoSortKey = "manual";
+  showSortBar();
+  hint.classList.add("show");
+  _lastListKey = "";
+  renderList();
+  saveSettings();
+}
+// 「手動」ボタンを再度押した時：手動並び替えモードだけを終了する（並替行はそのまま表示され続ける）
+function exitManualMode() {
+  sortMode = false;
+  document.getElementById("sb-manual").classList.remove("active");
+  hint.classList.remove("show");
+  _lastListKey = "";
+  renderList();
+}
+
+// ── 並替ボタン（バーの表示・非表示のみを切り替える）────────
 sortToggle.addEventListener("click", () => {
-  sortMode = !sortMode;
-  sortToggle.classList.toggle("active", sortMode);
-  sortToggle.textContent = sortMode ? "完了" : "並替";
-  searchEl.disabled = sortMode;
-  categoryBtn.disabled = sortMode;
-  categoryBtn.style.opacity = sortMode ? .4 : 1;
-  categoryFilterBar.classList.toggle("show", !sortMode && categoryFilter !== null);
-  hint.classList.toggle("show", sortMode);
-  sortBar.style.display = sortMode ? "flex" : "none";
+  if (sortBarVisible) {
+    if (sortMode) exitManualMode();
+    hideSortBar();
+  } else {
+    showSortBar();
+  }
   _lastListKey = "";
   renderList();
 });
 
-// ── Search toggle button ──────────────────────────────────
-document.getElementById("search-toggle").addEventListener("click", () => {
-  const b = document.getElementById("search-wrap");
-  b.style.display = b.style.display === "none" ? "block" : "none";
+// バー右端の✕：バーを閉じる（手動モード中であれば手動モードも終了）
+sortBarClearBtn.addEventListener("click", () => {
+  if (sortMode) exitManualMode();
+  hideSortBar();
+  _lastListKey = "";
+  renderList();
 });
+
+// 「手動」ボタン：押すたびに手動並び替えモードのON/OFFを切り替える（並替行の表示状態は変えない）
+document.getElementById("sb-manual").addEventListener("click", () => {
+  if (sortMode) exitManualMode();
+  else enterManualMode();
+});
+
+// ── 検索モード ─────────────────────────────────────────────
+function enterSearchModeUI() {
+  searchMode = true;
+  searchToggleBtn.classList.add("active");
+  searchWrap.classList.add("show");
+}
+function exitSearchModeUI() {
+  searchMode = false;
+  searchToggleBtn.classList.remove("active");
+  searchWrap.classList.remove("show");
+  searchEl.value = "";
+  _lastListKey = "";
+  renderList();
+}
+searchToggleBtn.addEventListener("click", () => {
+  if (searchMode) exitSearchModeUI();
+  else enterSearchModeUI();
+});
+searchClearBtn.addEventListener("click", exitSearchModeUI);
+
+// ── カテゴリモード ─────────────────────────────────────────
+function enterCategoryModeUI() {
+  categoryMode = true;
+  // 既存メモに実在しないカテゴリは選択状態から除外した上で復元する
+  const existingCats = new Set(getAllCategories());
+  const filtered = new Set([...categoryFilterSet].filter(c => c === "" || existingCats.has(c)));
+  if (filtered.size !== categoryFilterSet.size) {
+    categoryFilterSet = filtered;
+    saveSettings();
+  }
+  updateCategoryBtnLabel();
+  _lastListKey = "";
+  renderList();
+}
+function exitCategoryModeUI() {
+  // カテゴリボタンでモードを閉じる場合：選択状態は保持したまま表示（絞り込み適用）のみ閉じる
+  categoryMode = false;
+  updateCategoryBtnLabel();
+  _lastListKey = "";
+  renderList();
+}
+function clearCategoryFilterUI() {
+  // 行右端の「✕ 解除」：選択状態そのものをクリアしてモードを閉じる
+  categoryMode = false;
+  categoryFilterSet.clear();
+  saveSettings();
+  updateCategoryBtnLabel();
+  _lastListKey = "";
+  renderList();
+}
 
 // ── Category filter ───────────────────────────────────────
 const categoryFilterBar   = document.getElementById("category-filter-bar");
 const categoryFilterName  = document.getElementById("category-filter-name");
 function updateCategoryBtnLabel() {
-  categoryBtn.classList.toggle("active", categoryFilter !== null);
-  categoryFilterBar.classList.toggle("show", categoryFilter !== null);
-  if (categoryFilter !== null) {
-    categoryFilterName.textContent = categoryLabel(categoryFilter);
-  }
+  categoryBtn.classList.toggle("active", categoryMode);
+  categoryFilterBar.classList.toggle("show", categoryMode);
+  categoryFilterName.textContent = categoryFilterSet.size === 0
+    ? t("categoryAll")
+    : [...categoryFilterSet].map(categoryLabel).join("、");
 }
 function buildCategoryModal() {
   categoryOptionList.textContent = "";
-  const options = [{label:"すべて", value:null}, {label:"カテゴリなし", value:""}];
+  const options = [{label:t("categoryAll"), value:null}, {label:t("categoryNone"), value:""}];
   getAllCategories().forEach(c => options.push({label:c, value:c}));
   const frag = document.createDocumentFragment();
   options.forEach(opt => {
     const btn = document.createElement("button");
-    btn.className = "cat-option" + (categoryFilter === opt.value ? " active" : "");
+    const isActive = opt.value === null ? categoryFilterSet.size === 0 : categoryFilterSet.has(opt.value);
+    btn.className = "cat-option" + (isActive ? " active" : "");
     btn.textContent = opt.label;
     if (opt.value === null) btn.dataset.all = "1";
     else btn.dataset.value = opt.value;
@@ -854,26 +2634,69 @@ function buildCategoryModal() {
   categoryOptionList.appendChild(frag);
 }
 // 1つの委譲リスナーで全ボタンを処理（開くたびにリスナーを量産しない）
+// タップのたびに選択／解除を即時トグルする（複数選択・OR条件）。モーダルは閉じない。
 categoryOptionList.addEventListener("click", e => {
   const btn = e.target.closest(".cat-option");
   if (!btn) return;
-  categoryFilter = btn.dataset.all ? null : (btn.dataset.value || "");
+  if (btn.dataset.all) {
+    categoryFilterSet.clear();
+  } else {
+    const val = btn.dataset.value || "";
+    if (categoryFilterSet.has(val)) categoryFilterSet.delete(val);
+    else categoryFilterSet.add(val);
+  }
+  saveSettings();
   updateCategoryBtnLabel();
-  categoryModalBg.classList.add("hidden");
+  buildCategoryModal();
   _lastListKey = "";
   renderList();
 });
+// 「カテゴリ」ボタン：カテゴリモードのON/OFFを切り替える（モーダルはここでは開かない）
 categoryBtn.addEventListener("click", () => {
+  if (categoryMode) exitCategoryModeUI();
+  else enterCategoryModeUI();
+});
+// 「表示中のカテゴリ：」行をタップした時だけ、選択モーダルを開く
+categoryFilterLabelEl.addEventListener("click", () => {
+  if (!categoryMode) return;
   buildCategoryModal();
   categoryModalBg.classList.remove("hidden");
 });
 document.getElementById("category-modal-close").addEventListener("click", () => categoryModalBg.classList.add("hidden"));
 categoryModalBg.addEventListener("click", e => { if (e.target === categoryModalBg) categoryModalBg.classList.add("hidden"); });
-document.getElementById("category-filter-clear").addEventListener("click", () => {
-  categoryFilter = null;
-  updateCategoryBtnLabel();
-  _lastListKey = "";
-  renderList();
+// 行右端の✕：カテゴリモードを終了し、絞り込みも解除する
+document.getElementById("category-filter-clear").addEventListener("click", clearCategoryFilterUI);
+
+// ── 確認モーダル（一覧削除・編集画面削除・全体デフォルト化 共通）───
+let _pendingConfirmAction = null;
+let _confirmMessageKey = "confirmDeleteNote"; // 表示中のメッセージのi18nキー（言語切替時の再描画に使用）
+let _confirmIcon = "🗑️"; // 表示中のタイトルアイコン（言語切替時の再描画に使用）
+function showConfirmModal(messageKey, action, icon) {
+  _pendingConfirmAction = action;
+  _confirmMessageKey = messageKey;
+  _confirmIcon = icon || "🗑️";
+  deleteConfirmTitle.textContent = _confirmIcon + " " + t("confirmTitle");
+  deleteConfirmMessage.textContent = t(messageKey);
+  deleteConfirmModalBg.classList.remove("hidden");
+}
+function showDeleteConfirm(action) {
+  showConfirmModal("confirmDeleteNote", action, "🗑️");
+}
+document.getElementById("delete-confirm-yes").addEventListener("click", () => {
+  deleteConfirmModalBg.classList.add("hidden");
+  const action = _pendingConfirmAction;
+  _pendingConfirmAction = null;
+  if (action) action();
+});
+document.getElementById("delete-confirm-no").addEventListener("click", () => {
+  deleteConfirmModalBg.classList.add("hidden");
+  _pendingConfirmAction = null;
+});
+deleteConfirmModalBg.addEventListener("click", e => {
+  if (e.target === deleteConfirmModalBg) {
+    deleteConfirmModalBg.classList.add("hidden");
+    _pendingConfirmAction = null;
+  }
 });
 
 // ── カテゴリ入力補助（候補ポップアップ）───────────────────
@@ -924,6 +2747,25 @@ document.addEventListener("click", e => {
   closeCategorySuggest();
 }, {passive:true});
 
+// ── テーマ切替 ─────────────────────────────────────────────
+document.getElementById("theme-light").addEventListener("click", () => { applyThemeSetting("light"); saveSettings(); });
+document.getElementById("theme-dark").addEventListener("click", () => { applyThemeSetting("dark"); saveSettings(); });
+document.getElementById("theme-system").addEventListener("click", () => { applyThemeSetting("system"); saveSettings(); });
+
+// ── Language switch ───────────────────────────────────────
+document.getElementById("lang-ja").addEventListener("click", () => setLanguage("ja"));
+document.getElementById("lang-en").addEventListener("click", () => setLanguage("en"));
+document.getElementById("lang-es").addEventListener("click", () => setLanguage("es"));
+document.getElementById("lang-pt").addEventListener("click", () => setLanguage("pt"));
+document.getElementById("lang-ko").addEventListener("click", () => setLanguage("ko"));
+document.getElementById("lang-id").addEventListener("click", () => setLanguage("id"));
+document.getElementById("lang-zh").addEventListener("click", () => setLanguage("zh"));
+document.getElementById("lang-th").addEventListener("click", () => setLanguage("th"));
+document.getElementById("lang-vi").addEventListener("click", () => setLanguage("vi"));
+document.getElementById("lang-de").addEventListener("click", () => setLanguage("de"));
+document.getElementById("lang-hi").addEventListener("click", () => setLanguage("hi"));
+document.getElementById("lang-fr").addEventListener("click", () => setLanguage("fr"));
+
 // ── Settings modal ────────────────────────────────────────
 document.getElementById("settings-btn").addEventListener("click", () => modalBg.classList.remove("hidden"));
 document.getElementById("modal-close").addEventListener("click", () => { modalBg.classList.add("hidden"); saveSettings(); });
@@ -934,6 +2776,41 @@ editorSettingsBtn.addEventListener("click", () => editorSettingsModalBg.classLis
 document.getElementById("editor-settings-modal-close").addEventListener("click", () => { editorSettingsModalBg.classList.add("hidden"); saveSettings(); });
 editorSettingsModalBg.addEventListener("click", e => { if (e.target === editorSettingsModalBg) { editorSettingsModalBg.classList.add("hidden"); saveSettings(); } });
 
+// このメモの固有調整値（フォントサイズ／行間）を削除し、全体のデフォルト値を参照する状態に戻す
+editorOverrideResetBtn.addEventListener("click", () => {
+  if (currentId) {
+    const idx = notes.findIndex(n => n.id === currentId);
+    if (idx !== -1) {
+      delete notes[idx].fontSize;
+      delete notes[idx].lineHeight;
+      save();
+    }
+  }
+  applyEditorFs(defaultEditorFs);
+  applyEditorLh(defaultEditorLh);
+  updateEditorOverrideBadge();
+});
+
+// 現在のフォントサイズ／行間のスライダー値を、全メモ共通のデフォルト値として保存する
+applyGlobalDefaultBtn.addEventListener("click", () => {
+  showConfirmModal("confirmApplyGlobalDefault", () => {
+    defaultEditorFs = +editorFsRange.value;
+    defaultEditorLh = +editorLhRange.value;
+    saveSettings();
+    // このメモも今後は全体既定値に追従させるため、メモ固有の保持値を削除する
+    if (currentId) {
+      const idx = notes.findIndex(n => n.id === currentId);
+      if (idx !== -1 && (notes[idx].fontSize !== undefined || notes[idx].lineHeight !== undefined)) {
+        delete notes[idx].fontSize;
+        delete notes[idx].lineHeight;
+        save();
+      }
+    }
+    updateEditorOverrideBadge();
+    showToast(t("appliedGlobalDefault"));
+  }, "⚙️");
+});
+
 listFsRange.addEventListener("input", function() { applyListFs(+this.value); });
 listLhRange.addEventListener("input", function() { applyListLh(+this.value); });
 showDateToggle.addEventListener("change", function() {
@@ -942,42 +2819,104 @@ showDateToggle.addEventListener("change", function() {
   _lastListKey = "";
   renderList();
 });
+lockHideToggle.addEventListener("change", function() {
+  lockHideEnabled = this.checked;
+  saveSettings();
+  _lastListKey = "";
+  renderList();
+});
+document.getElementById("char-count-toggle").addEventListener("change", function() {
+  charCountEnabled = this.checked;
+  saveSettings();
+  updateDetailHeaderInfo();
+});
+
+// ── 一覧で使う日時（作成日時／更新日時）─────────────────
+function updateDateFieldButtons() {
+  document.getElementById("date-field-created").classList.toggle("active", dateField === "createdAt");
+  document.getElementById("date-field-updated").classList.toggle("active", dateField === "updatedAt");
+}
+function setDateField(which) {
+  dateField = which;
+  updateDateFieldButtons();
+  saveSettings();
+  _lastListKey = "";
+  renderList();
+  if (currentId) {
+    updateDetailHeaderInfo();
+  }
+}
+document.getElementById("date-field-created").addEventListener("click", () => setDateField("createdAt"));
+document.getElementById("date-field-updated").addEventListener("click", () => setDateField("updatedAt"));
 
 // ── Editor font size ──────────────────────────────────────
 editorFsRange.addEventListener("input", function() {
   applyEditorFs(+this.value);
-  saveSettings();
+  saveCurrentNoteEditorStyle();
+  updateEditorOverrideBadge();
 });
 editorLhRange.addEventListener("input", function() {
   applyEditorLh(+this.value);
-  saveSettings();
+  saveCurrentNoteEditorStyle();
+  updateEditorOverrideBadge();
 });
 
 // ── 編集内容の保存（保存ボタン／自動保存 共通処理）────────
-function persistEdit() {
+let _editDirty  = false; // 未保存の変更があるか（④ 変更が無ければ保存処理自体を省く）
+let _lastSaveAt = 0;     // 直近に保存した時刻（① 連続入力中でも一定間隔で保存を挟むためのthrottle用）
+const AUTO_SAVE_THROTTLE_MS = 10000; // 連続入力中でも、前回保存からこの時間が経過していれば強制的に保存を挟む
+function persistEdit(force = false) {
   if (!currentId) return;
+  if (!force && !_editDirty) return; // 変更が無ければ何もしない（電池・書き込み回数の節約）
   const idx = notes.findIndex(n => n.id === currentId);
-  if (idx === -1) return;
+  if (idx === -1) {
+    // 既に（未記入により）破棄済みのメモに対して、その後何か入力された場合は復元する
+    const hasContent = titleEl.value.trim() || categoryEl.value.trim() || bodyEl.value.trim();
+    if (!hasContent) { _editDirty = false; return; }
+    const now = new Date().toISOString();
+    notes.unshift({
+      id: currentId, title: titleEl.value.trim(), body: bodyEl.value,
+      category: categoryEl.value.trim(), createdAt: now, updatedAt: now, pinned: false, locked: false
+    });
+    updateDetailHeaderInfo();
+    save();
+    _editDirty = false;
+    _lastSaveAt = Date.now();
+    return;
+  }
   notes[idx].title     = titleEl.value.trim();
   notes[idx].body      = bodyEl.value;
   notes[idx].category  = categoryEl.value.trim();
   notes[idx].updatedAt = new Date().toISOString();
-  detailDate.textContent = "最終更新: " + fmt(notes[idx].updatedAt);
+  updateDetailHeaderInfo();
   save();
+  _editDirty = false;
+  _lastSaveAt = Date.now();
+}
+// 題名・カテゴリ・本文がすべて未記入かどうかを判定する
+function isNoteEmpty(n) {
+  return !(n.title||"").trim() && !(n.category||"").trim() && !(n.body||"").trim();
+}
+// 指定IDのメモが全項目未記入であれば一覧から破棄する（破棄した場合はtrueを返す）
+function discardIfEmptyNote(id) {
+  const idx = notes.findIndex(n => n.id === id);
+  if (idx === -1) return false;
+  if (!isNoteEmpty(notes[idx])) return false;
+  notes.splice(idx, 1);
+  save();
+  return true;
 }
 
 document.getElementById("save-btn").addEventListener("click", () => {
   if (!currentId) return;
-  persistEdit();
-  const btn = document.getElementById("save-btn");
-  btn.textContent = "✅ 保存済";
-  setTimeout(() => { btn.textContent = "💾 保存"; }, 1200);
+  persistEdit(true);
+  setSaveBtnText(t("savedBtn"));
+  setTimeout(() => { setSaveBtnText(t("saveBtn")); }, 1200);
 });
-document.getElementById("back-btn").addEventListener("click", () => { persistEdit(); showList(); });
-document.getElementById("del-note-btn").addEventListener("click", () => {
-  if (!currentId) return;
-  if (!confirm("このメモを削除しますか？")) return;
-  notes = notes.filter(n => n.id !== currentId); save(); showList();
+document.getElementById("back-btn").addEventListener("click", () => {
+  persistEdit(true);
+  discardIfEmptyNote(currentId);
+  showList();
 });
 
 // ── Pin toggle ────────────────────────────────────────────
@@ -990,14 +2929,32 @@ pinBtn.addEventListener("click", () => {
   save();
 });
 
-// ── Auto-save（debounce）─────────────────────────────────
+// ── Lock toggle ───────────────────────────────────────────
+lockBtn.addEventListener("click", () => {
+  if (!currentId) return;
+  const idx = notes.findIndex(n => n.id === currentId);
+  if (idx === -1) return;
+  notes[idx].locked = !notes[idx].locked;
+  updateLockBtn(notes[idx].locked);
+  save();
+  _lastListKey = ""; // 一覧に戻った時に🔒表示・非表示設定を反映させる
+});
+
+// ── Auto-save（debounce ＋ ①throttle ＋ ④dirtyフラグ）─────
 let _autoSaveTimer = null;
 function scheduleAutoSave() {
+  _editDirty = true; // 未保存の変更ありとしてマーク（④）
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(persistEdit, 600);
+  if (Date.now() - _lastSaveAt >= AUTO_SAVE_THROTTLE_MS) {
+    // 連続入力中で通常のdebounceがずっと先延ばしにされ続けていても、
+    // 前回保存から一定時間が経過していればここで強制的に保存を挟む（①）
+    persistEdit();
+  } else {
+    _autoSaveTimer = setTimeout(persistEdit, 600);
+  }
 }
 titleEl.addEventListener("input", scheduleAutoSave);
-bodyEl.addEventListener("input",  scheduleAutoSave);
+bodyEl.addEventListener("input",  () => { scheduleAutoSave(); updateDetailHeaderInfo(); });
 categoryEl.addEventListener("input", scheduleAutoSave);
 
 // ── List click delegation ─────────────────────────────────
@@ -1010,58 +2967,194 @@ document.getElementById("add-btn").addEventListener("click", () => {
 });
 
 // ─────────────────────────────────────────────────────────
+// ── ZIP (.memo) ヘルパー ──────────────────────────────────
+// 単一エントリ（data.json）のみを含む最小構成のZIPを自前で組み立てる。
+// 可能なら CompressionStream("deflate-raw") で圧縮し、非対応環境では
+// 無圧縮（store）で格納する。読み込み側も同じ方式に対応する。
+// ─────────────────────────────────────────────────────────
+const MEM_ENTRY_NAME = "data.json";
+let _crc32Table = null;
+function crc32(bytes) {
+  if (!_crc32Table) {
+    _crc32Table = [];
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      _crc32Table[n] = c >>> 0;
+    }
+  }
+  let crc = 0 ^ (-1);
+  for (let i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ _crc32Table[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ (-1)) >>> 0;
+}
+function u16(v) { return [v & 0xFF, (v >>> 8) & 0xFF]; }
+function u32(v) { return [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]; }
+
+async function buildMemZip(jsonStr) {
+  const data = new TextEncoder().encode(jsonStr);
+  const crc = crc32(data);
+  let method = 0, payload = data;
+  if (window.CompressionStream) {
+    try {
+      const cs = new CompressionStream("deflate-raw");
+      const writer = cs.writable.getWriter();
+      writer.write(data); writer.close();
+      payload = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+      method = 8;
+    } catch { method = 0; payload = data; }
+  }
+  const nameBytes = new TextEncoder().encode(MEM_ENTRY_NAME);
+  const now = new Date();
+  const dosTime = ((now.getHours() & 0x1F) << 11) | ((now.getMinutes() & 0x3F) << 5) | (Math.floor(now.getSeconds()/2) & 0x1F);
+  const dosDate = (((now.getFullYear() - 1980) & 0x7F) << 9) | (((now.getMonth() + 1) & 0xF) << 5) | (now.getDate() & 0x1F);
+
+  const localHeader = new Uint8Array([
+    ...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(method),
+    ...u16(dosTime), ...u16(dosDate), ...u32(crc),
+    ...u32(payload.length), ...u32(data.length),
+    ...u16(nameBytes.length), ...u16(0), ...nameBytes
+  ]);
+  const centralHeader = new Uint8Array([
+    ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(method),
+    ...u16(dosTime), ...u16(dosDate), ...u32(crc),
+    ...u32(payload.length), ...u32(data.length),
+    ...u16(nameBytes.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+    ...u32(0), ...u32(0), ...nameBytes
+  ]);
+  const eocd = new Uint8Array([
+    ...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(1), ...u16(1),
+    ...u32(centralHeader.length), ...u32(localHeader.length + payload.length), ...u16(0)
+  ]);
+
+  const total = new Uint8Array(localHeader.length + payload.length + centralHeader.length + eocd.length);
+  let off = 0;
+  total.set(localHeader, off); off += localHeader.length;
+  total.set(payload, off);     off += payload.length;
+  total.set(centralHeader, off); off += centralHeader.length;
+  total.set(eocd, off);
+  return new Blob([total], {type: "application/octet-stream"});
+}
+
+async function parseMemZip(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const dv = new DataView(arrayBuffer);
+  if (bytes.length < 30 || dv.getUint32(0, true) !== 0x04034b50) throw new Error("invalid .mem file");
+  const method     = dv.getUint16(8, true);
+  const compSize   = dv.getUint32(18, true);
+  const nameLen    = dv.getUint16(26, true);
+  const extraLen   = dv.getUint16(28, true);
+  const dataStart  = 30 + nameLen + extraLen;
+  const compData   = bytes.slice(dataStart, dataStart + compSize);
+  let outBytes;
+  if (method === 8) {
+    if (!window.DecompressionStream) throw new Error("deflate not supported");
+    const ds = new DecompressionStream("deflate-raw");
+    const writer = ds.writable.getWriter();
+    writer.write(compData); writer.close();
+    outBytes = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+  } else {
+    outBytes = compData;
+  }
+  return new TextDecoder().decode(outBytes);
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ─────────────────────────────────────────────────────────
+// ── 汎用ZIP解析（Google Keepなど、複数エントリを含む一般的な
+//    ZIPファイルを読み込むための簡易パーサー。.mem用のparseMemZip
+//    とは別物。中央ディレクトリを辿って各エントリを取得する）
+// ─────────────────────────────────────────────────────────
+async function parseZipEntries(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const dv = new DataView(arrayBuffer);
+
+  // EOCD（終端レコード）を末尾から探す
+  let eocdOffset = -1;
+  const minOffset = Math.max(0, bytes.length - 22 - 65536);
+  for (let i = bytes.length - 22; i >= minOffset; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) throw new Error("ZIPファイルの終端レコードが見つかりません");
+
+  const entryCount       = dv.getUint16(eocdOffset + 10, true);
+  const centralDirOffset = dv.getUint32(eocdOffset + 16, true);
+
+  const dirEntries = [];
+  let offset = centralDirOffset;
+  for (let i = 0; i < entryCount; i++) {
+    if (dv.getUint32(offset, true) !== 0x02014b50) break; // 中央ディレクトリの署名不一致
+    const method       = dv.getUint16(offset + 10, true);
+    const compSize      = dv.getUint32(offset + 20, true);
+    const nameLen        = dv.getUint16(offset + 28, true);
+    const extraLen        = dv.getUint16(offset + 30, true);
+    const commentLen        = dv.getUint16(offset + 32, true);
+    const localHeaderOffset = dv.getUint32(offset + 42, true);
+    const name = new TextDecoder("utf-8").decode(bytes.slice(offset + 46, offset + 46 + nameLen));
+    dirEntries.push({ name, method, compSize, localHeaderOffset });
+    offset += 46 + nameLen + extraLen + commentLen;
+  }
+
+  const results = [];
+  for (const entry of dirEntries) {
+    if (entry.name.endsWith("/")) continue; // ディレクトリ
+    const lh = entry.localHeaderOffset;
+    if (dv.getUint32(lh, true) !== 0x04034b50) continue; // ローカルヘッダの署名不一致
+    const lNameLen  = dv.getUint16(lh + 26, true);
+    const lExtraLen = dv.getUint16(lh + 28, true);
+    const dataStart = lh + 30 + lNameLen + lExtraLen;
+    const compData  = bytes.slice(dataStart, dataStart + entry.compSize);
+
+    let outBytes;
+    if (entry.method === 0) {
+      outBytes = compData; // 無圧縮
+    } else if (entry.method === 8) {
+      if (!window.DecompressionStream) throw new Error("お使いの環境はZIPの解凍に対応していません");
+      const ds = new DecompressionStream("deflate-raw");
+      const writer = ds.writable.getWriter();
+      writer.write(compData); writer.close();
+      outBytes = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    } else {
+      continue; // 非対応の圧縮方式はスキップ
+    }
+    results.push({ name: entry.name, bytes: outBytes });
+  }
+  return results;
+}
+
+// ─────────────────────────────────────────────────────────
 // ── EXPORT ───────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────
 
-// CSV
-document.getElementById("csv-export-btn").addEventListener("click", () => {
-  const rows = [["id","title","body","category","updatedAt","pinned"]];
-  notes.forEach(n => rows.push([
-    n.id,
-    '"' + (n.title||"").replace(/"/g,'""') + '"',
-    '"' + (n.body ||"").replace(/"/g,'""') + '"',
-    '"' + (n.category ||"").replace(/"/g,'""') + '"',
-    n.updatedAt,
-    n.pinned ? "1" : "0"
-  ]));
-  const csv = rows.map(r => r.join(",")).join("\r\n");
-  exportFile(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}),
-             "memo_" + today() + ".csv", {"text/csv": [".csv"]});
+// 引継ぎデータ（.memo ＝ 内部JSONをZIP圧縮）
+document.getElementById("mem-export-btn").addEventListener("click", async () => {
+  try {
+    const blob = await buildMemZip(JSON.stringify(notes, null, 2));
+    exportFile(blob, "memo_" + today() + ".mem", {"application/octet-stream": [".mem"]});
+  } catch(err) { alert(t("exportFail")(err.message)); }
 });
 
-// JSON
-document.getElementById("json-export-btn").addEventListener("click", () => {
-  const data = JSON.stringify(notes, null, 2);
-  exportFile(new Blob([data], {type:"application/json;charset=utf-8"}),
-             "memo_" + today() + ".json", {"application/json": [".json"]});
+// 汎用テキスト（.txt ＝ 題名と本文のみの平文）
+document.getElementById("txt-export-btn").addEventListener("click", () => {
+  const txt = notes.map(n => (n.title || "") + "\n" + (n.body || "")).join("\n\n----------\n\n");
+  exportFile(new Blob([txt], {type:"text/plain;charset=utf-8"}),
+             "memo_" + today() + ".txt", {"text/plain": [".txt"]});
 });
-
-// HTML
-document.getElementById("html-export-btn").addEventListener("click", () => {
-  const items = notes.map(n =>
-    `<article>\n  <h2>${esc(n.title)}</h2>\n  <p class="category">${esc(categoryLabel(n.category))}</p>\n  <time>${esc(n.updatedAt)}</time>\n  <pre>${esc(n.body)}</pre>\n</article>`
-  ).join("\n");
-  const html = `<!DOCTYPE html>\n<html lang="ja">\n<head><meta charset="UTF-8"><title>メモ一覧</title>` +
-    `<style>body{font-family:sans-serif;max-width:700px;margin:2em auto;padding:0 1em}` +
-    `article{border:1px solid #ccc;border-radius:8px;margin-bottom:1.5em;padding:1em}` +
-    `h2{margin:0 0 .3em}.category{font-size:.8em;color:#a67c00;margin:0 0 .3em}time{font-size:.8em;color:#888}pre{white-space:pre-wrap;margin-top:.6em}</style>\n</head>\n<body>\n` +
-    `<h1>メモ一覧</h1>\n${items}\n</body>\n</html>`;
-  exportFile(new Blob([html], {type:"text/html;charset=utf-8"}),
-             "memo_" + today() + ".html", {"text/html": [".html"]});
-});
-
-function today() { return new Date().toISOString().slice(0,10); }
 
 // ─────────────────────────────────────────────────────────
 // ── IMPORT ───────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────
 
-function mergeImported(imported) {
+function mergeImported(imported, excludeEmpty = false) {
   imported.forEach(n => {
     if (!n.id) n.id = Date.now() + Math.random();
     if (!n.updatedAt) n.updatedAt = new Date().toISOString();
     if (n.pinned === undefined) n.pinned = false;
+    if (n.locked === undefined) n.locked = false;
     if (n.category === undefined || n.category === null) n.category = "";
+    if (!n.createdAt) n.createdAt = n.updatedAt || new Date().toISOString();
+    // 題名・本文・カテゴリがすべて空欄のメモは取り込み対象から除外する（既存メモには影響しない）
+    if (excludeEmpty && isNoteEmpty(n)) return;
     const ex = notes.findIndex(x => x.id === n.id);
     if (ex !== -1) notes[ex] = n;
     else notes.unshift(n);
@@ -1071,105 +3164,111 @@ function mergeImported(imported) {
   renderList();
 }
 
-// CSV import
-document.getElementById("csv-import-btn").addEventListener("click", () => document.getElementById("csv-import").click());
-document.getElementById("csv-import").addEventListener("change", function() {
+// 引継ぎデータ（.memo）取り込み
+document.getElementById("mem-import-btn").addEventListener("click", () => document.getElementById("mem-import").click());
+document.getElementById("mem-import").addEventListener("change", function() {
   const file = this.files[0]; if (!file) return;
-  readFile(file, "UTF-8", text => {
-    try {
-      const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(l=>l.trim());
-      const header = parseCSVLine(lines[0]).map(h => h.trim());
-      const idx = name => header.indexOf(name);
-      const iId = idx("id"), iTitle = idx("title"), iBody = idx("body"),
-            iCategory = idx("category"), iUpdated = idx("updatedAt"), iPinned = idx("pinned");
-      const imported = [];
-      for (let i=1; i<lines.length; i++) {
-        const cols = parseCSVLine(lines[i]);
-        if (cols.length < 3) continue;
-        imported.push({
-          id: Number(cols[iId]) || Date.now()+i,
-          title: (iTitle!==-1 && cols[iTitle]) || "",
-          body:  (iBody!==-1 && cols[iBody]) || "",
-          category: (iCategory!==-1 && cols[iCategory]) || "",
-          updatedAt: (iUpdated!==-1 && cols[iUpdated]) || new Date().toISOString(),
-          pinned: iPinned!==-1 && cols[iPinned]==="1"
-        });
-      }
-      mergeImported(imported);
-      alert(imported.length + "件を取り込みました。");
-    } catch(err) { alert("CSVの読み込みに失敗しました: "+err.message); }
-  });
-  this.value = "";
-});
-
-// JSON import
-document.getElementById("json-import-btn").addEventListener("click", () => document.getElementById("json-import").click());
-document.getElementById("json-import").addEventListener("change", function() {
-  const file = this.files[0]; if (!file) return;
-  readFile(file, "UTF-8", text => {
-    try {
-      let data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error("配列形式のJSONではありません");
-      mergeImported(data);
-      alert(data.length + "件を取り込みました。");
-    } catch(err) { alert("JSONの読み込みに失敗しました: "+err.message); }
-  });
-  this.value = "";
-});
-
-// HTML import（このアプリが書き出したHTMLのみ対応）
-document.getElementById("html-import-btn").addEventListener("click", () => document.getElementById("html-import").click());
-document.getElementById("html-import").addEventListener("change", function() {
-  const file = this.files[0]; if (!file) return;
-  readFile(file, "UTF-8", text => {
-    try {
-      const dp = new DOMParser();
-      const doc = dp.parseFromString(text, "text/html");
-      const arts = doc.querySelectorAll("article");
-      if (!arts.length) throw new Error("<article> 要素が見つかりません");
-      const imported = [];
-      arts.forEach(art => {
-        const title     = art.querySelector("h2")?.textContent || "";
-        const body      = art.querySelector("pre")?.textContent || "";
-        const updatedAt = art.querySelector("time")?.textContent || new Date().toISOString();
-        let category    = art.querySelector(".category")?.textContent || "";
-        if (category === "カテゴリなし") category = "";
-        imported.push({id: Date.now()+Math.random(), title, body, category, updatedAt, pinned:false});
-      });
-      mergeImported(imported);
-      alert(imported.length + "件を取り込みました。");
-    } catch(err) { alert("HTMLの読み込みに失敗しました: "+err.message); }
-  });
-  this.value = "";
-});
-
-function readFile(file, enc, cb) {
   const reader = new FileReader();
-  reader.onload = e => cb(e.target.result);
-  reader.readAsText(file, enc);
-}
+  reader.onload = async e => {
+    try {
+      const jsonStr = await parseMemZip(e.target.result);
+      const data = JSON.parse(jsonStr);
+      if (!Array.isArray(data)) throw new Error(t("jsonNotArray"));
+      mergeImported(data, true);
+      alert(t("importedCount")(data.length));
+    } catch(err) { alert(t("memLoadFail")(err.message)); }
+  };
+  reader.readAsArrayBuffer(file);
+  this.value = "";
+});
 
-function parseCSVLine(line) {
-  const result=[]; let cur="",inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(inQ){ if(c==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(c==='"'){inQ=false;} else cur+=c; }
-    else { if(c==='"'){inQ=true;} else if(c===','){result.push(cur);cur="";} else cur+=c; }
+// Google Keepデータ（.zip）取り込み ─ デバッグ用の個人的な取り込み機能
+// ゴミ箱のメモ（isTrashed）は除外し、アーカイブ済みのメモは取り込み対象とする。
+// ラベルは本アプリの「カテゴリ」欄にカンマ区切りでまとめる。
+document.getElementById("keep-import-btn").addEventListener("click", () => document.getElementById("keep-import").click());
+document.getElementById("keep-import").addEventListener("change", async function() {
+  const file = this.files[0]; if (!file) return;
+  try {
+    const buf = await file.arrayBuffer();
+    const entries = await parseZipEntries(buf);
+    const jsonEntries = entries.filter(e => e.name.toLowerCase().endsWith(".json"));
+    if (!jsonEntries.length) throw new Error("zip内にJSONファイルが見つかりませんでした");
+
+    const nowIso = new Date().toISOString();
+    const imported = [];
+
+    jsonEntries.forEach(e => {
+      let obj;
+      try { obj = JSON.parse(new TextDecoder("utf-8").decode(e.bytes)); }
+      catch { return; } // JSONとして解析できないファイルはスキップ
+      if (!obj || typeof obj !== "object") return;
+      if (!("isTrashed" in obj)) return; // Keepのメモ特有のフィールドが無ければメモ以外のJSONとみなしスキップ
+      if (obj.isTrashed === true) return; // ゴミ箱のメモは除外
+
+      let body = "";
+      if (typeof obj.textContent === "string") {
+        body = obj.textContent;
+      } else if (Array.isArray(obj.listContent)) {
+        body = obj.listContent
+          .map(item => (item && item.isChecked ? "☑ " : "☐ ") + ((item && item.text) || ""))
+          .join("\n");
+      }
+
+      const labels = Array.isArray(obj.labels)
+        ? obj.labels.map(l => l && l.name).filter(Boolean)
+        : [];
+
+      const created = obj.createdTimestampUsec
+        ? new Date(Math.round(obj.createdTimestampUsec / 1000)).toISOString() : nowIso;
+      const updated = obj.userEditedTimestampUsec
+        ? new Date(Math.round(obj.userEditedTimestampUsec / 1000)).toISOString() : created;
+
+      imported.push({
+        id: Date.now() + Math.random(),
+        title: obj.title || "",
+        body: body,
+        category: labels.join(","),
+        createdAt: created,
+        updatedAt: updated,
+        pinned: obj.isPinned === true
+      });
+    });
+
+    if (!imported.length) {
+      alert("取り込めるメモが見つかりませんでした。");
+    } else {
+      mergeImported(imported);
+      alert(imported.length + "件のGoogle Keepメモを取り込みました。");
+    }
+  } catch (err) {
+    alert("Google Keepデータ(.zip)の読み込みに失敗しました: " + err.message);
+  } finally {
+    this.value = "";
   }
-  result.push(cur); return result;
-}
+});
 
 // ── 日時／題名 ソートトグル ───────────────────────────────
-let dateAsc=false,titleAsc=false;
+let dateAsc=false,titleAsc=false,categoryAsc=false;
 document.getElementById("sb-date-toggle").addEventListener("click",()=>{
+ if (sortMode) exitManualMode();
  dateAsc=!dateAsc;
  setAutoSort(dateAsc?"date-asc":"date-desc");
- document.getElementById("sb-date-toggle").textContent=dateAsc?"日時↑":"日時↓";
+ document.getElementById("sb-date-toggle").textContent=dateAsc?t("sortDateAsc"):t("sortDateDesc");
+ saveSettings();
 });
 document.getElementById("sb-title-toggle").addEventListener("click",()=>{
+ if (sortMode) exitManualMode();
  titleAsc=!titleAsc;
  setAutoSort(titleAsc?"title-asc":"title-desc");
- document.getElementById("sb-title-toggle").textContent=titleAsc?"題名↑":"題名↓";
+ document.getElementById("sb-title-toggle").textContent=titleAsc?t("sortTitleAsc"):t("sortTitleDesc");
+ saveSettings();
+});
+document.getElementById("sb-category-toggle").addEventListener("click",()=>{
+ if (sortMode) exitManualMode();
+ categoryAsc=!categoryAsc;
+ setAutoSort(categoryAsc?"category-asc":"category-desc");
+ document.getElementById("sb-category-toggle").textContent=categoryAsc?t("sortCategoryAsc"):t("sortCategoryDesc");
+ saveSettings();
 });
 
 // ── 戻るボタン（Android）: いきなり終了せず確認ダイアログを表示 ─
@@ -1195,7 +3294,8 @@ function handleBackPress() {
   }
   // 詳細画面が開いていれば、まず一覧に戻るだけにする
   if (detailView.classList.contains("active")) {
-    persistEdit();
+    persistEdit(true);
+    discardIfEmptyNote(currentId);
     showList();
     pushGuardState();
     return;
@@ -1220,7 +3320,7 @@ function handleBackPress() {
     return;
   }
   // 一覧画面のトップ：終了確認ダイアログを表示
-  if (confirm("メモ帳アプリを終了しますか？")) {
+  if (confirm(t("confirmExitApp"))) {
     tryExitApp();
   } else {
     pushGuardState();
@@ -1236,12 +3336,44 @@ try {
   }
 } catch {}
 
+// ── アプリが閉じられた／バックグラウンドに移行した場合の空メモ破棄 ─
+// 「閉じる」を完全に検知することはWeb技術上できないため、
+// pagehide（ページ離脱・終了時）と visibilitychange（バックグラウンド移行時）の
+// 両方を使い、編集中のメモが全項目未記入であればその時点で破棄しておく。
+function discardCurrentIfEmptyOnLeave() {
+  if (!detailView.classList.contains("active") || !currentId) return;
+  persistEdit(true);
+  discardIfEmptyNote(currentId);
+}
+window.addEventListener("pagehide", discardCurrentIfEmptyOnLeave);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) discardCurrentIfEmptyOnLeave();
+});
+
+// ── 想定外エラー発生時の緊急保存（#5）─────────────────────
+// 未捕捉の例外やPromise rejectionが起きた際、編集中の内容が
+// 保存されないまま落ちてしまうのを防ぐため、その時点の内容を保存しておく。
+function emergencySaveOnError() {
+  try {
+    if (detailView.classList.contains("active") && currentId) {
+      persistEdit(true);
+    }
+  } catch {}
+}
+window.addEventListener("error", emergencySaveOnError);
+window.addEventListener("unhandledrejection", emergencySaveOnError);
+
 // ── Init ──────────────────────────────────────────────────
 load();
 loadSettings();
 showList();
 pushGuardState();
 
+// ストレージの永続化をリクエストする（#3）：端末のストレージ逼迫時に
+// ブラウザ／WebViewが保存データを自動削除してしまうのを防ぐ。対応していない環境では何もしない。
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
+}
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
