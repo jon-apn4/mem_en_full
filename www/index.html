@@ -445,7 +445,7 @@
       <div class="modal-row">
         <span class="modal-label" id="show-date-label">一覧に日時を表示</span>
         <label class="toggle-switch">
-          <input type="checkbox" id="show-date-toggle" checked>
+          <input type="checkbox" id="show-date-toggle">
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -1765,18 +1765,37 @@ function updateThemeButtons() {
   document.getElementById("theme-system").classList.toggle("active", themeSetting === "system");
 }
 
+// 端末の言語設定から、対応言語の中で最も近いものを自動判定する。
+// 対応言語のいずれにも該当しない場合は英語を返す（日本語をデフォルトにはしない）。
+const SUPPORTED_LANGS = ["ja","en","es","pt","ko","id","zh","th","vi","de","hi","fr"];
+function detectDeviceLang() {
+  try {
+    const cands = (navigator.languages && navigator.languages.length)
+      ? navigator.languages
+      : [navigator.language || navigator.userLanguage];
+    for (const l of cands) {
+      if (!l) continue;
+      const primary = String(l).toLowerCase().split("-")[0];
+      if (SUPPORTED_LANGS.includes(primary)) return primary;
+    }
+  } catch {}
+  return "en";
+}
+
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
     applyThemeSetting(["light","dark","system"].includes(s.theme) ? s.theme : "system");
-    currentLang = ["en","es","pt","ko","id","zh","th","vi","de","hi","fr"].includes(s.lang) ? s.lang : "ja";
+    // 既に言語設定が保存済みならそれを使用。未設定（初回起動）なら端末の言語から自動判定し、
+    // 対応言語が無ければ英語にする。
+    currentLang = SUPPORTED_LANGS.includes(s.lang) ? s.lang : detectDeviceLang();
     applyListFs(s.listFs   || 18);
     defaultEditorFs = s.editorFs || 18;
     defaultEditorLh = s.editorLh || 1.6;
     applyListLh(s.listLh   || 1.8);
     applyEditorFs(defaultEditorFs);
     applyEditorLh(defaultEditorLh);
-    showDateEnabled = s.showDate !== false; // 未設定時は表示する
+    showDateEnabled = s.showDate === true; // 未設定時は表示しない（既定オフ）
     showDateToggle.checked = showDateEnabled;
     lockHideEnabled = s.lockHide === true; // 未設定時は表示する（非表示にしない）
     lockHideToggle.checked = lockHideEnabled;
@@ -2787,7 +2806,11 @@ document.getElementById("lang-hi").addEventListener("click", () => setLanguage("
 document.getElementById("lang-fr").addEventListener("click", () => setLanguage("fr"));
 
 // ── Settings modal ────────────────────────────────────────
-document.getElementById("settings-btn").addEventListener("click", () => modalBg.classList.remove("hidden"));
+document.getElementById("settings-btn").addEventListener("click", () => {
+  modalBg.classList.remove("hidden");
+  const modalEl = modalBg.querySelector(".modal");
+  if (modalEl) modalEl.scrollTop = 0; // 前回のスクロール位置を引き継がず、常に最上部から表示する
+});
 document.getElementById("modal-close").addEventListener("click", () => { modalBg.classList.add("hidden"); saveSettings(); });
 modalBg.addEventListener("click", e => { if(e.target===modalBg){ modalBg.classList.add("hidden"); saveSettings(); } });
 
