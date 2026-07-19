@@ -10,7 +10,11 @@
       --bg:#FFFFFF; --hd:#F7F7F8; --hover:#C4C4CB; --border:#BDBDC4;
       --accent:#FFD60A; --accent-fg:#927B06; --text:#1C1C1E; --muted:#6E6E73; --danger:#FF3B30;
       --accent-rgb:255,214,10; --overlay-rgb:0,0,0;
-      --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+      /* SystemBarsプラグインが注入する専用CSS変数(--safe-area-inset-*)を優先使用。
+         一部の古いAndroid WebView(<140)ではenv(safe-area-inset-*)が正しい値を返さず、
+         ステータスバー領域にヘッダー背景が届かない（＝時計やアイコンが見えなくなる）不具合の対策。 */
+      --safe-top:var(--safe-area-inset-top, env(safe-area-inset-top,0px));
+      --safe-bottom:var(--safe-area-inset-bottom, env(safe-area-inset-bottom,0px));
       --list-fs:18px; --editor-fs:18px; --row-min-h:36px;
     }
     html[data-theme="dark"] {
