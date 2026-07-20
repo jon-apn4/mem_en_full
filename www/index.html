@@ -10,6 +10,7 @@
       --bg:#FFFFFF; --hd:#F7F7F8; --hover:#C4C4CB; --border:#BDBDC4;
       --accent:#FFD60A; --accent-fg:#927B06; --text:#1C1C1E; --muted:#6E6E73; --danger:#FF3B30;
       --accent-rgb:255,214,10; --overlay-rgb:0,0,0;
+      --bar-bg:#EFEFF1;
       /* SystemBarsプラグインが注入する専用CSS変数(--safe-area-inset-*)を優先使用。
          一部の古いAndroid WebView(<140)ではenv(safe-area-inset-*)が正しい値を返さず、
          ステータスバー領域にヘッダー背景が届かない（＝時計やアイコンが見えなくなる）不具合の対策。 */
@@ -21,6 +22,7 @@
       --bg:#1C1C1E; --hd:#2C2C2E; --hover:#3A3A3C; --border:#3A3A3C;
       --accent:#FFD60A; --accent-fg:#FFD60A; --text:#F2F2F7; --muted:#8E8E93; --danger:#FF453A;
       --accent-rgb:255,214,10; --overlay-rgb:255,255,255;
+      --bar-bg:#242426;
     }
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
@@ -30,7 +32,7 @@
     /* ── HEADER ── */
     header { display:flex; align-items:center; gap:6px;
       padding:calc(18px + var(--safe-top)) 10px 2px;
-      background:var(--hd); border-bottom:1px solid var(--border); flex-shrink:0; }
+      background:var(--hd); border-bottom:2px solid var(--text); flex-shrink:0; }
     #header-title { flex-shrink:0; font-size:17px; font-weight:700; text-align:left;
       white-space:nowrap; }
     #header-actions { flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end;
@@ -43,7 +45,15 @@
       font-size:11px; font-weight:700; cursor:pointer; padding:4px 8px; border-radius:7px;
       -webkit-tap-highlight-color:transparent; white-space:nowrap; flex-shrink:0; }
     .seg-btn.active { background:var(--accent); color:#000; }
-    #add-btn { background:var(--accent); color:#000; border-radius:8px; padding:0 8px;
+    .seg-icon-btn { background:none; border:1.5px solid var(--accent-fg); color:var(--accent-fg);
+      cursor:pointer; padding:0 6px; border-radius:7px; height:24px; box-sizing:border-box;
+      display:inline-flex; align-items:center; justify-content:center;
+      -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    .seg-icon-btn svg { width:20px; height:20px; display:block; flex-shrink:0; }
+    .seg-icon-btn.active { background:var(--accent); color:#000; }
+    .prefix-icon { width:13px; height:13px; vertical-align:-2px; margin-right:3px;
+      color:var(--accent-fg); flex-shrink:0; display:inline-block; }
+    #add-btn, #category-modal-close { background:var(--accent); color:#000; border:1.5px solid var(--accent-fg); border-radius:8px; padding:0 8px;
       height:24px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; }
     #back-btn { font-size:14px; padding:4px 0; flex-shrink:0; }
     #detail-right-group { flex:1; min-width:0; display:flex; align-items:center;
@@ -72,20 +82,20 @@
 
     /* ── SEARCH ── */
     #search-wrap { display:none; align-items:center; gap:8px; padding:3px 12px;
-      border-bottom:1px solid var(--border); flex-shrink:0; }
+      background:var(--bar-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
     #search-wrap.show { display:flex; }
     #search-label { flex:1; display:flex; align-items:center; gap:6px; min-width:0; }
     #search-prefix { font-size:12px; color:var(--text); white-space:nowrap; flex-shrink:0; }
     #search-clear { background:none; border:none; color:var(--text); font-size:12px;
       cursor:pointer; padding:2px 4px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
     #category-filter-bar { display:none; align-items:center; gap:8px; padding:3px 12px;
-      border-bottom:1px solid var(--border); flex-shrink:0; }
+      background:var(--bar-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
     #category-filter-bar.show { display:flex; }
     #category-filter-label { flex:1; display:flex; align-items:center; gap:6px; min-width:0;
       overflow:hidden; cursor:pointer; }
     #category-filter-prefix { font-size:12px; color:var(--text); white-space:nowrap; flex-shrink:0; }
     #category-filter-name { font-size:10px; color:var(--accent-fg); background:rgba(var(--accent-rgb),.1);
-      border:1px solid rgba(var(--accent-rgb),.3); border-radius:6px; padding:2px 8px; font-weight:700;
+      border:1px solid rgba(var(--accent-rgb),.3); border-radius:6px; padding:2px 8px; font-weight:400;
       flex:0 1 auto; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     #category-filter-clear { background:none; border:none; color:var(--text); font-size:12px;
       cursor:pointer; padding:2px 4px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
@@ -94,16 +104,19 @@
     #search::placeholder { color:var(--muted); }
 
     /* ── SORT BAR ── */
-    #sort-bar { display:flex; align-items:center; gap:6px; padding:3px 10px;
-      border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
+    #sort-bar { display:none; align-items:center; gap:6px; padding:3px 12px;
+      background:var(--bar-bg); border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
+    #sort-bar.show { display:flex; }
+    #search-wrap.bar-last, #category-filter-bar.bar-last, #sort-bar.bar-last {
+      border-bottom:2px solid var(--text); }
     .sort-btn { background:none; border:1px solid var(--border); border-radius:6px;
-      color:var(--text); font-size:12px; padding:3px 8px; cursor:pointer; white-space:nowrap;
+      color:var(--text); font-size:10px; font-family:inherit; padding:2px 8px; cursor:pointer; white-space:nowrap;
       -webkit-tap-highlight-color:transparent; flex-shrink:0; }
     .sort-btn.active { border-color:var(--accent-fg); color:var(--accent-fg); background:rgba(var(--accent-rgb),.08); }
     #sb-manual.active { background:var(--accent); color:#000; border-color:var(--accent); }
-    #sort-bar-label { font-size:12px; color:var(--text); flex-shrink:0; }
+    #sort-bar-label { display:flex; align-items:center; font-size:12px; color:var(--text); flex-shrink:0; }
     #sort-bar-clear { background:none; border:none; color:var(--text); font-size:12px;
-      cursor:pointer; padding:3px 6px; margin-left:auto; flex-shrink:0;
+      cursor:pointer; padding:2px 4px; margin-left:auto; flex-shrink:0;
       -webkit-tap-highlight-color:transparent; white-space:nowrap; }
 
     /* ── LIST ── */
@@ -261,7 +274,8 @@
       background:none; border:none; color:var(--accent-fg); font-size:12px; line-height:1.1;
       cursor:pointer; -webkit-tap-highlight-color:transparent; }
     .cat-suggest-item:active, .cat-suggest-item:hover { background:rgba(var(--accent-rgb),.2); }
-    .cat-option { display:block; width:100%; text-align:left; padding:9px 10px; margin-bottom:6px;
+    .cat-option { display:flex; align-items:center; width:100%; text-align:left; padding:0 10px;
+      height:24px; box-sizing:border-box; margin-bottom:6px;
       border:1px solid var(--border); border-radius:8px; background:none; color:var(--text);
       font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
     .cat-option.active { border-color:var(--accent-fg); color:var(--accent-fg); background:rgba(var(--accent-rgb),.08); }
@@ -309,27 +323,27 @@
     <header>
       <span id="header-title"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="1.8" style="vertical-align:-3px;margin-right:4px;flex-shrink:0;stroke:var(--accent-fg)"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg><span id="header-title-text">メモ帳</span></span>
       <div id="header-actions">
-        <button class="seg-btn" id="sort-toggle">並替</button><button class="seg-btn" id="search-toggle">検索</button><button class="seg-btn" id="category-btn">カテゴリ</button>
+        <button class="seg-icon-btn" id="sort-toggle" aria-label="並替"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9"/><path d="M4 12h6"/><path d="M4 18h6"/><path d="M15 15l3 3l3-3"/><path d="M18 6v12"/></svg></button><button class="seg-icon-btn" id="search-toggle" aria-label="検索"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button><button class="seg-icon-btn" id="category-btn" aria-label="カテゴリ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><path d="M7 7h.01"/></svg></button>
         <button class="hbtn gear-btn" id="settings-btn">⚙️</button>
         <button class="hbtn" id="add-btn">＋ 新規</button>
       </div>
     </header>
     <div id="search-wrap">
-      <span id="search-label"><span id="search-prefix">🔍 検索：</span><input id="search" type="search" placeholder="検索…" autocomplete="off" autocorrect="off" spellcheck="false"></span>
-      <button id="search-clear">✕ 解除</button>
+      <span id="search-label"><span id="search-prefix"><svg class="prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span id="search-prefix-text">検索：</span></span><input id="search" type="search" placeholder="検索…" autocomplete="off" autocorrect="off" spellcheck="false"></span>
+      <button id="search-clear">✕</button>
     </div>
     <div id="category-filter-bar">
-      <span id="category-filter-label"><span id="category-filter-prefix">📁 カテゴリ：</span><span id="category-filter-name"></span></span>
-      <button id="category-filter-clear">✕ 解除</button>
+      <span id="category-filter-label"><span id="category-filter-prefix"><svg class="prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><path d="M7 7h.01"/></svg><span id="category-filter-prefix-text">カテゴリ：</span></span><span id="category-filter-name"></span></span>
+      <button id="category-filter-clear">✕</button>
     </div>
     <!-- ソートバー -->
-    <div id="sort-bar" style="display:none">
-      <span id="sort-bar-label">並順:</span>
+    <div id="sort-bar">
+      <span id="sort-bar-label"><svg class="prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9"/><path d="M4 12h6"/><path d="M4 18h6"/><path d="M15 15l3 3l3-3"/><path d="M18 6v12"/></svg><span id="sort-bar-label-text">並順:</span></span>
       <button class="sort-btn" id="sb-title-toggle">題名↓</button>
       <button class="sort-btn" id="sb-category-toggle">カテゴリ↓</button>
       <button class="sort-btn" id="sb-date-toggle">日時↓</button>
       <button class="sort-btn" id="sb-manual">手動</button>
-      <button id="sort-bar-clear">✕ 解除</button>
+      <button id="sort-bar-clear">✕</button>
     </div>
     <div id="longpress-hint">≡ ドラッグで並べ替え／「完了」で終了</div>
     <ul id="note-list"></ul>
@@ -485,9 +499,11 @@
   <!-- CATEGORY MODAL -->
   <div class="modal-bg hidden" id="category-modal-bg">
     <div class="modal">
-      <h2 id="category-modal-title">📁 カテゴリで絞り込み</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 id="category-modal-title" style="margin-bottom:0;text-align:left;">📁 カテゴリで絞り込み</h2>
+        <button type="button" class="hbtn" id="category-modal-close">設定</button>
+      </div>
       <div id="category-option-list"></div>
-      <button class="modal-close" id="category-modal-close">閉じる</button>
     </div>
   </div>
 
@@ -523,9 +539,9 @@ const I18N = {
     categoryBtn: "カテゴリ",
     newBtn: "＋ 新規",
     searchPlaceholder: "検索…",
-    searchingPrefix: "🔍 検索：",
-    categoryFilterPrefix: "📁 カテゴリ：",
-    categoryFilterClear: "✕ 解除",
+    searchingPrefix: "検索：",
+    categoryFilterPrefix: "カテゴリ：",
+    categoryFilterClear: "✕",
     sortBarLabel: "並び順：",
     sortManual: "手動",
     sortDateDesc: "日時↓",
@@ -557,6 +573,7 @@ const I18N = {
     confirmApplyGlobalDefault: "全メモの既定値にしますか？",
     appliedGlobalDefault: "✅ 既定値を更新しました",
     closeBtn: "閉じる",
+    categoryModalSettingsBtn: "設定",
     settingsTitle: "⚙️ 設定",
     themeSettingLabel: "テーマ",
     themeLightBtn: "ライトモード",
@@ -615,9 +632,9 @@ const I18N = {
     categoryBtn: "Category",
     newBtn: "+ New",
     searchPlaceholder: "Search…",
-    searchingPrefix: "🔍 Search: ",
-    categoryFilterPrefix: "📁 Category: ",
-    categoryFilterClear: "✕ Clear",
+    searchingPrefix: "Search: ",
+    categoryFilterPrefix: "Category: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Sort:",
     sortManual: "Manual",
     sortDateDesc: "Date↓",
@@ -707,9 +724,9 @@ const I18N = {
     categoryBtn: "Categoría",
     newBtn: "+ Nueva",
     searchPlaceholder: "Buscar…",
-    searchingPrefix: "🔍 Buscar: ",
-    categoryFilterPrefix: "📁 Categoría: ",
-    categoryFilterClear: "✕ Quitar",
+    searchingPrefix: "Buscar: ",
+    categoryFilterPrefix: "Categoría: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Orden:",
     sortManual: "Manual",
     sortDateDesc: "Fecha↓",
@@ -799,9 +816,9 @@ const I18N = {
     categoryBtn: "Categoria",
     newBtn: "+ Nova",
     searchPlaceholder: "Buscar…",
-    searchingPrefix: "🔍 Buscar: ",
-    categoryFilterPrefix: "📁 Categoria: ",
-    categoryFilterClear: "✕ Remover",
+    searchingPrefix: "Buscar: ",
+    categoryFilterPrefix: "Categoria: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Ordem:",
     sortManual: "Manual",
     sortDateDesc: "Data↓",
@@ -891,9 +908,9 @@ const I18N = {
     categoryBtn: "카테고리",
     newBtn: "+ 새 메모",
     searchPlaceholder: "검색…",
-    searchingPrefix: "🔍 검색: ",
-    categoryFilterPrefix: "📁 카테고리: ",
-    categoryFilterClear: "✕ 해제",
+    searchingPrefix: "검색: ",
+    categoryFilterPrefix: "카테고리: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "정렬:",
     sortManual: "수동",
     sortDateDesc: "날짜↓",
@@ -983,9 +1000,9 @@ const I18N = {
     categoryBtn: "Kategori",
     newBtn: "+ Baru",
     searchPlaceholder: "Cari…",
-    searchingPrefix: "🔍 Cari: ",
-    categoryFilterPrefix: "📁 Kategori: ",
-    categoryFilterClear: "✕ Hapus",
+    searchingPrefix: "Cari: ",
+    categoryFilterPrefix: "Kategori: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Urutan:",
     sortManual: "Manual",
     sortDateDesc: "Tanggal↓",
@@ -1075,9 +1092,9 @@ const I18N = {
     categoryBtn: "分類",
     newBtn: "＋ 新增",
     searchPlaceholder: "搜尋…",
-    searchingPrefix: "🔍 搜尋：",
-    categoryFilterPrefix: "📁 分類：",
-    categoryFilterClear: "✕ 清除",
+    searchingPrefix: "搜尋：",
+    categoryFilterPrefix: "分類：",
+    categoryFilterClear: "✕",
     sortBarLabel: "排序：",
     sortManual: "手動",
     sortDateDesc: "日期↓",
@@ -1167,9 +1184,9 @@ const I18N = {
     categoryBtn: "หมวดหมู่",
     newBtn: "+ ใหม่",
     searchPlaceholder: "ค้นหา…",
-    searchingPrefix: "🔍 ค้นหา: ",
-    categoryFilterPrefix: "📁 หมวดหมู่: ",
-    categoryFilterClear: "✕ ล้าง",
+    searchingPrefix: "ค้นหา: ",
+    categoryFilterPrefix: "หมวดหมู่: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "เรียง:",
     sortManual: "กำหนดเอง",
     sortDateDesc: "วันที่↓",
@@ -1259,9 +1276,9 @@ const I18N = {
     categoryBtn: "Danh mục",
     newBtn: "+ Mới",
     searchPlaceholder: "Tìm…",
-    searchingPrefix: "🔍 Tìm: ",
-    categoryFilterPrefix: "📁 Danh mục: ",
-    categoryFilterClear: "✕ Xóa",
+    searchingPrefix: "Tìm: ",
+    categoryFilterPrefix: "Danh mục: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Sắp xếp:",
     sortManual: "Thủ công",
     sortDateDesc: "Ngày↓",
@@ -1351,9 +1368,9 @@ const I18N = {
     categoryBtn: "Kategorie",
     newBtn: "+ Neu",
     searchPlaceholder: "Suchen…",
-    searchingPrefix: "🔍 Suche: ",
-    categoryFilterPrefix: "📁 Kategorie: ",
-    categoryFilterClear: "✕ Entfernen",
+    searchingPrefix: "Suche: ",
+    categoryFilterPrefix: "Kategorie: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Sortierung:",
     sortManual: "Manuell",
     sortDateDesc: "Datum↓",
@@ -1443,9 +1460,9 @@ const I18N = {
     categoryBtn: "श्रेणी",
     newBtn: "+ नया",
     searchPlaceholder: "खोजें…",
-    searchingPrefix: "🔍 खोज: ",
-    categoryFilterPrefix: "📁 श्रेणी: ",
-    categoryFilterClear: "✕ हटाएं",
+    searchingPrefix: "खोज: ",
+    categoryFilterPrefix: "श्रेणी: ",
+    categoryFilterClear: "✕",
     sortBarLabel: "क्रम:",
     sortManual: "मैन्युअल",
     sortDateDesc: "तारीख↓",
@@ -1535,9 +1552,9 @@ const I18N = {
     categoryBtn: "Catégorie",
     newBtn: "+ Nouveau",
     searchPlaceholder: "Rechercher…",
-    searchingPrefix: "🔍 Recherche : ",
-    categoryFilterPrefix: "📁 Catégorie : ",
-    categoryFilterClear: "✕ Effacer",
+    searchingPrefix: "Recherche : ",
+    categoryFilterPrefix: "Catégorie : ",
+    categoryFilterClear: "✕",
     sortBarLabel: "Tri :",
     sortManual: "Manuel",
     sortDateDesc: "Date↓",
@@ -1832,17 +1849,17 @@ function applyLanguage() {
   document.title = t("appTabTitle");
 
   document.getElementById("header-title-text").textContent = t("appTitle").replace(/^📝\s*/, "");
-  sortToggle.textContent = t("sortBtn");
-  document.getElementById("search-prefix").textContent = t("searchingPrefix");
+  sortToggle.setAttribute("aria-label", t("sortBtn"));
+  document.getElementById("search-prefix-text").textContent = t("searchingPrefix");
   document.getElementById("search-clear").textContent = t("categoryFilterClear");
   document.getElementById("sort-bar-clear").textContent = t("categoryFilterClear");
-  document.getElementById("search-toggle").textContent = t("searchBtn");
-  categoryBtn.textContent = t("categoryBtn");
+  document.getElementById("search-toggle").setAttribute("aria-label", t("searchBtn"));
+  categoryBtn.setAttribute("aria-label", t("categoryBtn"));
   document.getElementById("add-btn").textContent = t("newBtn");
   searchEl.placeholder = t("searchPlaceholder");
-  document.getElementById("category-filter-prefix").textContent = t("categoryFilterPrefix");
+  document.getElementById("category-filter-prefix-text").textContent = t("categoryFilterPrefix");
   document.getElementById("category-filter-clear").textContent = t("categoryFilterClear");
-  document.getElementById("sort-bar-label").textContent = t("sortBarLabel");
+  document.getElementById("sort-bar-label-text").textContent = t("sortBarLabel");
   document.getElementById("sb-manual").textContent = t("sortManual");
   document.getElementById("sb-date-toggle").textContent = dateAsc ? t("sortDateAsc") : t("sortDateDesc");
   document.getElementById("sb-title-toggle").textContent = titleAsc ? t("sortTitleAsc") : t("sortTitleDesc");
@@ -1897,7 +1914,7 @@ function applyLanguage() {
   document.getElementById("modal-close").textContent = t("closeBtn");
 
   document.getElementById("category-modal-title").textContent = t("categoryModalTitle");
-  document.getElementById("category-modal-close").textContent = t("closeBtn");
+  document.getElementById("category-modal-close").textContent = t("categoryModalSettingsBtn");
 
   document.getElementById("lang-ja").classList.toggle("active", currentLang === "ja");
   document.getElementById("lang-en").classList.toggle("active", currentLang === "en");
@@ -2538,12 +2555,14 @@ function moveNote(fromId, toId, insertAfter) {
 function showSortBar() {
   sortBarVisible = true;
   sortToggle.classList.add("active");
-  sortBar.style.display = "flex";
+  sortBar.classList.add("show");
+  updateBarDividers();
 }
 function hideSortBar() {
   sortBarVisible = false;
   sortToggle.classList.remove("active");
-  sortBar.style.display = "none";
+  sortBar.classList.remove("show");
+  updateBarDividers();
 }
 
 // ── 手動並び替えモード（各行に「≡」「×」を表示）───────────
@@ -2600,6 +2619,7 @@ function enterSearchModeUI() {
   searchMode = true;
   searchToggleBtn.classList.add("active");
   searchWrap.classList.add("show");
+  updateBarDividers();
 }
 function exitSearchModeUI() {
   searchMode = false;
@@ -2608,6 +2628,7 @@ function exitSearchModeUI() {
   searchEl.value = "";
   _lastListKey = "";
   renderList();
+  updateBarDividers();
 }
 searchToggleBtn.addEventListener("click", () => {
   if (searchMode) exitSearchModeUI();
@@ -2649,12 +2670,25 @@ function clearCategoryFilterUI() {
 // ── Category filter ───────────────────────────────────────
 const categoryFilterBar   = document.getElementById("category-filter-bar");
 const categoryFilterName  = document.getElementById("category-filter-name");
+// 並替・検索・カテゴリの各バーのうち、表示中で最も下（メモ一覧に隣接する側）にあるものだけに
+// 太い仕切り線（フォント色）を付け、バー同士の間は現状どおり細い仕切り線のままにする
+function updateBarDividers() {
+  const bars = [
+    { el: searchWrap, visible: searchMode },
+    { el: categoryFilterBar, visible: categoryMode },
+    { el: sortBar, visible: sortBarVisible }
+  ];
+  bars.forEach(b => b.el.classList.remove("bar-last"));
+  const visible = bars.filter(b => b.visible);
+  if (visible.length) visible[visible.length - 1].el.classList.add("bar-last");
+}
 function updateCategoryBtnLabel() {
   categoryBtn.classList.toggle("active", categoryMode);
   categoryFilterBar.classList.toggle("show", categoryMode);
   categoryFilterName.textContent = categoryFilterSet.size === 0
     ? t("categoryAll")
     : [...categoryFilterSet].map(categoryLabel).join("、");
+  updateBarDividers();
 }
 function buildCategoryModal() {
   categoryOptionList.textContent = "";
@@ -3410,6 +3444,7 @@ window.addEventListener("unhandledrejection", emergencySaveOnError);
 load();
 loadSettings();
 showList();
+updateBarDividers();
 pushGuardState();
 
 // ストレージの永続化をリクエストする（#3）：端末のストレージ逼迫時に
