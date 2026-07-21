@@ -16,6 +16,8 @@
          ステータスバー領域にヘッダー背景が届かない（＝時計やアイコンが見えなくなる）不具合の対策。 */
       --safe-top:var(--safe-area-inset-top, env(safe-area-inset-top,0px));
       --safe-bottom:var(--safe-area-inset-bottom, env(safe-area-inset-bottom,0px));
+      --safe-left:var(--safe-area-inset-left, env(safe-area-inset-left,0px));
+      --safe-right:var(--safe-area-inset-right, env(safe-area-inset-right,0px));
       --list-fs:18px; --editor-fs:18px; --row-min-h:36px;
     }
     html[data-theme="dark"] {
@@ -27,7 +29,8 @@
     html,body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
       -webkit-text-size-adjust:100%; overscroll-behavior:none; }
-    #app { display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
+    #app { display:flex; flex-direction:column; height:100dvh; overflow:hidden;
+      padding-left:var(--safe-left); padding-right:var(--safe-right); }
 
     /* ── HEADER ── */
     header { display:flex; align-items:center; gap:6px;
@@ -122,7 +125,7 @@
     /* ── LIST ── */
     #list-view { display:flex; flex-direction:column; flex:1; overflow:hidden; }
     #note-list { list-style:none; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;
-      padding-bottom:120px; }
+      padding-bottom:calc(120px + var(--safe-bottom)); }
 
     .note-row {
       display:flex; align-items:center;
@@ -174,9 +177,10 @@
     #detail-view { display:none; flex-direction:column; flex:1; overflow:hidden; }
     #detail-view.active { display:flex; }
     #editor { display:flex; flex-direction:column; flex:1;
-      padding:14px 16px calc(14px + var(--safe-bottom)); gap:6px; overflow:hidden; }
+      padding:14px 16px calc(14px + var(--safe-bottom)); gap:6px;
+      overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch; }
     #title-row { display:flex; align-items:baseline; gap:6px;
-      border-bottom:1px solid var(--border); padding-bottom:4px; }
+      border-bottom:1px solid var(--border); padding-bottom:4px; flex-shrink:0; }
     .field-label { color:var(--text); font-size:var(--editor-fs); font-weight:700;
       white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center;
       justify-content:center; height:1.2em; line-height:1; padding:0 6px;
@@ -184,14 +188,15 @@
     #note-title { background:transparent; border:none; outline:none; color:var(--text);
       font-size:var(--editor-fs); font-weight:700;
       font-family:inherit; width:100%; min-width:0; }
-    #note-body  { flex:1; background:transparent; border:none; outline:none; color:var(--text);
+    #note-body  { flex:1 0 auto; min-height:150px; background:transparent; border:none; outline:none; color:var(--text);
       font-size:var(--editor-fs); line-height:var(--editor-lh,1.45); font-family:inherit; resize:none; width:100%; }
     #note-title::placeholder,#note-body::placeholder { color:var(--muted); }
 
 
     /* ── SETTINGS MODAL ── */
     .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.6);
-      display:flex; align-items:flex-end; justify-content:center; z-index:100; }
+      display:flex; align-items:flex-end; justify-content:center; z-index:100;
+      padding-left:var(--safe-left); padding-right:var(--safe-right); box-sizing:border-box; }
     .modal-bg.hidden { display:none; }
     .modal { background:var(--hd); border-radius:18px 18px 0 0; width:100%; max-width:480px;
       padding:18px 18px calc(18px + var(--safe-bottom)); max-height:80vh; overflow-y:auto; }
@@ -260,7 +265,7 @@
       width:100%; min-width:0; }
     #note-category::placeholder { color:var(--muted); }
     #category-field-wrap { position:relative; display:flex; align-items:baseline; gap:6px;
-      border-bottom:1px solid var(--border); padding-bottom:4px; }
+      border-bottom:1px solid var(--border); padding-bottom:4px; flex-shrink:0; }
     .field-label-category { color:var(--text); font-size:12px; font-weight:700;
       white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center;
       justify-content:center; height:1.38em; line-height:1; padding:0 6px;
